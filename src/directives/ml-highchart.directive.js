@@ -20,7 +20,6 @@
    */
   angular.module('ml.highcharts')
     .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
-      'use strict';
 
       function link(scope, element, attrs) {
         scope.mlSearch = scope.mlSearch || searchFactory.newContext();

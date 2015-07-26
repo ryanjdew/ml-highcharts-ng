@@ -31,14 +31,13 @@ module.exports = function(config) {
       'bower_components/lodash/dist/lodash.min.js', // v2.4.x
       'bower_components/lodash/lodash.js', // v3.x
       'bower_components/ml-common-ng/dist/ml-common-ng.js',
-      'bower_components/ml-common-ng/dist/ml-search-ng.js',
+      'bower_components/ml-search-ng/dist/ml-search-ng.js',
 
       'dist/ml-highcharts-ng-tpls.min.js',
 
       // App under test
       'src/ml-highcharts.js',
       'src/ml-highcharts.service.js',
-      'src/controllers/ml-search.controller.js',
       'src/directives/*.js',
       'sample/*.js',
 
@@ -46,7 +45,6 @@ module.exports = function(config) {
       'bower_components/angular-mocks/angular-mocks.js',
 
       // Tests
-      // 'ui/test/**/*.js'
       'test/helpers.js',
       'test/spec/**/*.js',
 

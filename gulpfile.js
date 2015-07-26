@@ -45,7 +45,7 @@ gulp.task('templates', ['test'], function() {
     }))
     .pipe(html2Js({
       moduleName: 'ml.highcharts.tpls',
-      prefix: '/ml-highcharts'
+      prefix: '/ml-highcharts/'
     }))
     .pipe(concat('ml-highcharts-ng-tpls.min.js'))
     .pipe(uglify())
