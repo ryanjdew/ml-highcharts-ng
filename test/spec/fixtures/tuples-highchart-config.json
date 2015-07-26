@@ -18,14 +18,14 @@
       "text": "Ingredients"
     }
   },
-  "xAxisMapping": "Ingredients",
-  "xAxisCategoriesMapping": "Category",
+  "xAxisMLConstraint": "Ingredients",
+  "xAxisCategoriesMLConstraint": "Category",
   "yAxis": {
     "title": {
       "text": "$frequency"
     }
   },
-  "yAxisMapping": "$frequency",
+  "yAxisMLConstraint": "$frequency",
   "zAxis": {
     "title": {
       "text": null
@@ -35,5 +35,5 @@
     "height": 250,
     "width": 300
   },
-  "facetLimit": 15
+  "resultLimit": 15
 }

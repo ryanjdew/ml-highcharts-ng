@@ -50,7 +50,7 @@
               var value = con.range || con.collection;
               return (value && value.facet);
             });
-            highchartsHelper.getChartData(mlSearch, availableConstraints, highchartConfig, highchartConfig.facetLimit).then(function(values) {
+            highchartsHelper.getChartData(mlSearch, availableConstraints, highchartConfig, highchartConfig.resultLimit).then(function(values) {
               chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories);
               if (values.categories && values.categories.length) {
                 chart.xAxis.categories = values.categories;
@@ -87,20 +87,20 @@
       };
 
       highchartsHelper.getChartData = function(mlSearch, constraints, highchartConfig, limit) {
-        var facetNames = [highchartConfig.xAxisCategoriesMapping, highchartConfig.xAxisMapping, highchartConfig.yAxisMapping];
+        var facetNames = [highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint, highchartConfig.yAxisMLConstraint];
         var dataConfig = {
-          xCategoryAxis: highchartConfig.xAxisCategoriesMapping,
-          xAxis: highchartConfig.xAxisMapping,
-          yAxis: highchartConfig.yAxisMapping
+          xCategoryAxis: highchartConfig.xAxisCategoriesMLConstraint,
+          xAxis: highchartConfig.xAxisMLConstraint,
+          yAxis: highchartConfig.yAxisMLConstraint
         };
 
         var valueIndexes = [];
 
-        if (highchartConfig.xAxisCategoriesMapping === '$frequency') {
+        if (highchartConfig.xAxisCategoriesMLConstraint === '$frequency') {
           dataConfig.frequecy = 'xCategory';
-        } else if (highchartConfig.xAxisMapping === '$frequency') {
+        } else if (highchartConfig.xAxisMLConstraint === '$frequency') {
           dataConfig.frequecy = 'x';
-        } else if (highchartConfig.yAxisMapping === '$frequency') {
+        } else if (highchartConfig.yAxisMLConstraint === '$frequency') {
           dataConfig.frequecy = 'y';
         }
 
