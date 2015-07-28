@@ -1,0 +1,170 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta name="generator" content="JSDoc 3.3.2">
+  <meta charset="utf-8">
+  <title>Home</title>
+  <link rel="stylesheet" href="https://brick.a.ssl.fastly.net/Karla:400,400i,700,700i" type="text/css">
+  <link rel="stylesheet" href="https://brick.a.ssl.fastly.net/Noto+Serif:400,400i,700,700i" type="text/css">
+  <link rel="stylesheet" href="https://brick.a.ssl.fastly.net/Inconsolata:500" type="text/css">
+  <link href="css/baseline.css" rel="stylesheet">
+</head>
+
+<body onload="prettyPrint()">
+  <nav id="jsdoc-navbar" role="navigation" class="jsdoc-navbar">
+    <div id="jsdoc-navbar-container">
+      <div id="jsdoc-navbar-content">
+        <a href="index.html" class="jsdoc-navbar-package-name">Home</a>
+      </div>
+    </div>
+  </nav>
+  <div id="jsdoc-body-container">
+    <div id="jsdoc-content">
+      <div id="jsdoc-content-container">
+        <div id="jsdoc-banner" role="banner">
+        </div>
+        <div id="jsdoc-main" role="main">
+          <article>
+            <h1>ml-highcharts-ng</h1>
+            <p>AngularJS library for working with MarkLogic and Highcharts</p>
+            <h4>getting started</h4><pre class="prettyprint source"><code>bower install ml-highcharts-ng</code></pre>
+            <h4>services</h4>
+            <ul>
+              <li><code>HighchartsHelper</code>: Service for working with Highchart configuration files. It is used by the ml-highchart directive.</li>
+            </ul>
+            <h4>directives</h4>
+            <ul>
+              <li><code>ml-highchart</code>: accepts highcart configuration object as highchart-config and MLSearch context as ml-search</li>
+            </ul>
+            <h4>example</h4>
+            <p>app.js</p>
+            <pre class="prettyprint source lang-javascript"><code>(function() {
+  'use strict';
+
+  angular.module('app', ['ml.search','ml.highcharts']).controller('HighchartsCtrl', HighchartsCtrl);
+
+  HighchartsCtrl.$inject = ['$scope', '$location', 'MLSearchFactory', 'HighchartsHelper'];
+
+  function HighchartsCtrl($scope, $location, searchFactory, HighchartsHelper) {
+    var ctrl = this;
+    ctrl.mlSearch = searchFactory.newContext();
+    ctrl.highchartConfig = {
+      'options': {
+        'chart': {
+          'type': 'bar'
+        },
+        'tooltip': {
+          'style': {
+            'padding': 10,
+            'fontWeight': 'bold'
+          }
+        }
+      },
+      'title': {
+        'text': 'Title'
+      },
+      'xAxis': {
+        'title': {
+          'text': 'Ingredients'
+        }
+      },
+      // constraint name for x axis
+      'xAxisMLConstraint': 'Ingredients',
+      // optional constraint name for categorizing x axis values
+      'xAxisCategoriesMLConstraint': 'Category',
+      'yAxis': {
+        'title': {
+          'text': 'Frequency'
+        }
+      },
+      // constraint name for y axis ($frequency is special value for value/tuple frequency)
+      'yAxisMLConstraint': '$frequency',
+      'zAxis': {
+        'title': {
+          'text': null
+        }
+      },
+      'size': {
+        'height': 250,
+        'width': 300
+      },
+      // limit of returned results
+      'resultLimit': 15
+    };
+  }
+})();</code></pre>
+            <p>html </p>
+            <pre class="prettyprint source lang-html"><code>&lt;ml-highchart highchart-config=&quot;ctrl.highchartConfig&quot; ml-search=&quot;ctrl.mlSearch&quot;>&lt;/ml-highchart></code></pre></article>
+          <div class="symbol-index">
+            <section>
+              <div class="symbol-index-content">
+                <h2 id="EditChartConfigCtrl">EditChartConfigCtrl</h2>
+                <div class="symbol-index-section">
+                  <div class="symbol-index-column">
+                    <dl class="symbol-index-list">
+                      <dt class="symbol-index-name">
+                <a href="global.html#EditChartConfigCtrl" class="!symbol-index-name">EditChartConfigCtrl</a>
+            </dt>
+                      <dd>
+                      </dd>
+                    </dl>
+                  </div>
+                  <div class="symbol-index-column">
+                    <dl class="symbol-index-list">
+                    </dl>
+                  </div>
+                  <div class="symbol-index-column">
+                    <dl class="symbol-index-list">
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section>
+              <div class="symbol-index-content">
+                <h2 id="ml-highchart">ml-highchart</h2>
+                <div class="symbol-index-section">
+                  <div class="symbol-index-column">
+                    <dl class="symbol-index-list">
+                      <dt class="symbol-index-name">
+                <a href="ml-highchart.html" class="!symbol-index-name">ml-highchart</a>
+            </dt>
+                      <dd>
+                      </dd>
+                    </dl>
+                  </div>
+                  <div class="symbol-index-column">
+                    <dl class="symbol-index-list">
+                    </dl>
+                  </div>
+                  <div class="symbol-index-column">
+                    <dl class="symbol-index-list">
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+      <nav id="jsdoc-toc-nav" role="navigation"></nav>
+    </div>
+  </div>
+  <footer id="jsdoc-footer" class="jsdoc-footer">
+    <div id="jsdoc-footer-container">
+      <p>
+        Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc</a> 3.3.2 on July 27, 2015.
+      </p>
+    </div>
+  </footer>
+  <script src="scripts/jquery.min.js"></script>
+  <script src="scripts/jquery.cookie.js"></script>
+  <script src="scripts/tree.jquery.js"></script>
+  <script src="scripts/prettify.js"></script>
+  <script src="scripts/jsdoc-toc.js"></script>
+  <script src="scripts/linenumber.js"></script>
+  <script src="scripts/scrollanchor.js"></script>
+</body>
+
+</html>

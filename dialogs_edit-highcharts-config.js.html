@@ -1,5 +1,36 @@
-(function() {
-  'use strict';
+<!doctype html>
+<html>
+
+<head>
+  <meta name="generator" content="JSDoc 3.3.2">
+  <meta charset="utf-8">
+  <title>Source: dialogs/edit-highcharts-config.js</title>
+  <link rel="stylesheet" href="https://brick.a.ssl.fastly.net/Karla:400,400i,700,700i" type="text/css">
+  <link rel="stylesheet" href="https://brick.a.ssl.fastly.net/Noto+Serif:400,400i,700,700i" type="text/css">
+  <link rel="stylesheet" href="https://brick.a.ssl.fastly.net/Inconsolata:500" type="text/css">
+  <link href="css/baseline.css" rel="stylesheet">
+</head>
+
+<body onload="prettyPrint()">
+  <nav id="jsdoc-navbar" role="navigation" class="jsdoc-navbar">
+    <div id="jsdoc-navbar-container">
+      <div id="jsdoc-navbar-content">
+        <a href="index.html" class="jsdoc-navbar-package-name">Home</a>
+      </div>
+    </div>
+  </nav>
+  <div id="jsdoc-body-container">
+    <div id="jsdoc-content">
+      <div id="jsdoc-content-container">
+        <div id="jsdoc-banner" role="banner">
+        </div>
+        <div id="jsdoc-main" role="main">
+          <header class="page-header">
+            <h1>Source: dialogs/edit-highcharts-config.js</h1>
+          </header>
+          <article>
+            <pre class="prettyprint linenums"><code>(function() {
+  &#x27;use strict&#x27;;
   /**
    * @ngdoc controller
    * @kind constructor
@@ -7,8 +38,8 @@
    * @description
    * Controller for {@link editChartConfigDialog}. The controller is injected by the
    * $modal service. Provides a user interface for configuring a highchart.
-   * See <a href="http://angular-ui.github.io/bootstrap/"
-   * target="_blank">ui.bootstrap.modal</a> for more information.
+   * See &amp;lt;a href=&quot;http://angular-ui.github.io/bootstrap/&quot;
+   * target=&quot;_blank&quot;&gt;ui.bootstrap.modal&amp;lt;/a&gt; for more information.
    *
    * @param {ui.bootstrap.modal.$modalInstance} $modalInstance (injected)
    * @param {angular.Scope} $scope (injected)
@@ -19,12 +50,12 @@
    *
    */
 
-  angular.module('ml.highcharts')
-  .controller('EditChartConfigCtrl', ['$modalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'MLSearchFactory', function ($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, searchFactory) {
+  angular.module(&#x27;ml.highcharts&#x27;)
+  .controller(&#x27;EditChartConfigCtrl&#x27;, [&#x27;$modalInstance&#x27;, &#x27;$scope&#x27;, &#x27;HighchartsHelper&#x27;, &#x27;facets&#x27;, &#x27;highchartConfig&#x27;, &#x27;MLSearchFactory&#x27;, function ($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, searchFactory) {
       $scope.facetSortOptions = {};
       $scope.xSortOptions = {
         accept: function (sourceItemHandleScope, destSortableScope) {
-          return destSortableScope.modelValue.length < 1;
+          return destSortableScope.modelValue.length &amp;lt; 1;
         }
       };
       $scope.chartFacetOptions = Object.keys(facets);
@@ -36,17 +67,17 @@
             //This is the Main Highcharts chart config. Any Highchart options are valid here.
             //will be overriden by values specified below.
             chart: {
-                type: 'bar'
+                type: &#x27;bar&#x27;
             },
             tooltip: {
                 style: {
                     padding: 10,
-                    fontWeight: 'bold'
+                    fontWeight: &#x27;bold&#x27;
                 }
             }
         },
         title: {
-          text: 'Title'
+          text: &#x27;Title&#x27;
         },
         xAxis: {
           title: {text: facetName}
@@ -56,7 +87,7 @@
         yAxis: {
           title: {text: null}
         },
-        yAxisMLConstraint: '$frequency',
+        yAxisMLConstraint: &#x27;$frequency&#x27;,
         zAxis: {
           title: {text: null}
         },
@@ -95,7 +126,7 @@
       });
       
       $scope.$watch(function() { 
-        return $scope.xAxisMLConstraint.length + '' + $scope.yAxisMLConstraint.length + '' + $scope.xAxisCategoriesMLConstraint.length;
+        return $scope.xAxisMLConstraint.length + &#x27;&#x27; + $scope.yAxisMLConstraint.length + &#x27;&#x27; + $scope.xAxisCategoriesMLConstraint.length;
       }, function() {
         $scope.highchartConfig.xAxisMLConstraint = $scope.xAxisMLConstraint[0];
         $scope.highchartConfig.yAxisMLConstraint = $scope.yAxisMLConstraint[0];
@@ -115,14 +146,14 @@
    * @description A UI Bootstrap component that provides a modal dialog for
    * adding/editing a highcart config to the application.
    */
-  .factory('EditChartConfigDialog', [
-    '$modal',
+  .factory(&#x27;EditChartConfigDialog&#x27;, [
+    &#x27;$modal&#x27;,
     function ($modal) {
       return function (facets, highchartConfig) {
         return $modal.open({
-          templateUrl : '/ml-highcharts/templates/ml-highchart-config-modal.html',
-          controller : 'EditChartConfigCtrl',
-          size : 'lg',
+          templateUrl : &#x27;/ml-highcharts/templates/ml-highchart-config-modal.html&#x27;,
+          controller : &#x27;EditChartConfigCtrl&#x27;,
+          size : &#x27;lg&#x27;,
           resolve: {
             facets: function() {
               return facets;
@@ -135,4 +166,27 @@
       };
     }
   ]);
-}());
+}());</code></pre>
+          </article>
+        </div>
+      </div>
+      <nav id="jsdoc-toc-nav" role="navigation"></nav>
+    </div>
+  </div>
+  <footer id="jsdoc-footer" class="jsdoc-footer">
+    <div id="jsdoc-footer-container">
+      <p>
+        Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc</a> 3.3.2 on July 27, 2015.
+      </p>
+    </div>
+  </footer>
+  <script src="scripts/jquery.min.js"></script>
+  <script src="scripts/jquery.cookie.js"></script>
+  <script src="scripts/tree.jquery.js"></script>
+  <script src="scripts/prettify.js"></script>
+  <script src="scripts/jsdoc-toc.js"></script>
+  <script src="scripts/linenumber.js"></script>
+  <script src="scripts/scrollanchor.js"></script>
+</body>
+
+</html>
