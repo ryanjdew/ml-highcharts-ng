@@ -7,21 +7,25 @@
       highchartsHelper.seriesData = function(data, chartType, categories) {
         var seriesData = [];
         if (categories.length) {
-          seriesData = _.map(data, function(dp) {
-            var sData = [];
+          var mappedXValues = {};
+          angular.forEach(data, function(dp) {
+            if (!mappedXValues[dp.x]) {
+              mappedXValues[dp.x] = [];
+            }
             var dpCategoryIndex = categories.indexOf(dp.xCategory);
+            mappedXValues[dp.x][dpCategoryIndex] = [dp.xCategory, dp.y];
+          });
+          angular.forEach(mappedXValues, function(xVal, xValKey) {
             angular.forEach(categories, function(cat, index) {
-              if (index === dpCategoryIndex) {
-                sData[index] = [cat, dp.y];
-              } else {
-                sData[index] = [cat, 0];
+              if (!xVal[index]) {
+                xVal[index] = [cat, 0];
               }
             });
-            return {
-              type: chartType,
-              name: dp.x,
-              data: sData
-            };
+            seriesData.push({
+              'type': chartType,
+              'name': xValKey,
+              'data': xVal
+            });
           });
         } else if (chartType === 'pie') {
           seriesData = [{
@@ -43,7 +47,9 @@
       highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, callback) {
         var chartType = highchartConfig.options.chart.type;
         var chart = angular.copy(highchartConfig);
-        mlSearch = mlSearch || MLSearchFactory.newContext();
+        if (!mlSearch) {
+          mlSearch = MLSearchFactory.newContext();
+        }
         mlSearch.getStoredOptions('all').then(function(data) {
           if (data.options && data.options.constraint) {
             var availableConstraints = _.filter(data.options.constraint, function(con) {

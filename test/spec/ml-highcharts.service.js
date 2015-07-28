@@ -67,13 +67,19 @@ describe('HighchartsHelper#mock-service', function () {
     var populatedConfig = highchartsHelper.chartFromConfig(tuplesHighchartConfig);
     $rootScope.$apply();
     var results = mockTuplesResults['values-response'].tuple;
-    for (var i = 0; i < results.length; i++) {
-      expect(populatedConfig.series[i].name).toEqual(results[i]['distinct-value'][1]._value);
-      for (var j = 0; j < populatedConfig.series[i].data[0].length; j++) {
-        if (populatedConfig.series[i].data[j][0] === results[i]['distinct-value'][0]._value) {
-          expect(populatedConfig.series[i].data[j][1]).toEqual(results[i].frequency);
+    for (var i = 0; i < populatedConfig.series.length; i++) {
+      var seriesName = populatedConfig.series[i].name;
+      var expectedSeriesSum = 0;
+      for (var j = 0; j < results.length; j++) {
+        if (seriesName === results[j]['distinct-value'][1]._value) {
+          expectedSeriesSum += results[j].frequency;
         }
       }
+      var seriesSum = 0
+      for (var k = 0; k < populatedConfig.series[i].data.length; k++) {
+        seriesSum += populatedConfig.series[i].data[k][1];
+      }
+      expect(expectedSeriesSum).toEqual(seriesSum);
     }
   });
 

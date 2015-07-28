@@ -26,10 +26,12 @@ module.exports = function(config) {
       './node_modules/jquery/dist/jquery.min.js',
 
       'bower_components/angular/angular.js',
+      'bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js',
       'bower_components/angular-route/angular-route.js',
 
       'bower_components/lodash/dist/lodash.min.js', // v2.4.x
       'bower_components/lodash/lodash.js', // v3.x
+      'bower_components/highcharts-ng/dist/highcharts-ng.min.js',
       'bower_components/ml-common-ng/dist/ml-common-ng.js',
       'bower_components/ml-search-ng/dist/ml-search-ng.js',
 

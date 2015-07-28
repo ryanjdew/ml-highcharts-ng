@@ -22,13 +22,33 @@
     .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
 
       function link(scope, element, attrs) {
-        scope.mlSearch = scope.mlSearch || searchFactory.newContext();
+        if (!scope.mlSearch) {
+          scope.mlSearch = searchFactory.newContext();
+        }
         var loadData = function() {
           if (scope.highchartConfig) {
             scope.populatedConfig = HighchartsHelper.chartFromConfig(scope.highchartConfig, scope.mlSearch, scope.callback);
           }
         };
-        scope.$watchCollection('mlSearch.getQuery()', loadData);
+        var reloadChartsDecorator = function (fn) {
+          return function () {
+            var results = fn.apply(this, arguments);
+            if (results && angular.isFunction(results.then)) {
+              // Then this is promise
+              return results.then(function(data){
+                loadData();
+                return data;
+              });
+            } else {
+              loadData();
+              return results;
+            }
+          };
+        };
+
+        var origSearchFun = scope.mlSearch.search;
+        scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
+        loadData();
       }
       
       return {
