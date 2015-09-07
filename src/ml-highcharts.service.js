@@ -44,7 +44,7 @@
         return seriesData;
       };
 
-      highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, callback) {
+      highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, mlSearchController, callback) {
         var chartType = highchartConfig.options.chart.type;
         var chart = angular.copy(highchartConfig);
         if (!mlSearch) {
@@ -56,7 +56,7 @@
               var value = con.range || con.collection;
               return (value && value.facet);
             });
-            highchartsHelper.getChartData(mlSearch, availableConstraints, highchartConfig, highchartConfig.resultLimit).then(function(values) {
+            highchartsHelper.getChartData(mlSearch, mlSearchController, availableConstraints, highchartConfig, highchartConfig.resultLimit).then(function(values) {
               chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories);
               if (values.categories && values.categories.length) {
                 chart.xAxis.categories = values.categories;
@@ -92,7 +92,7 @@
         return chart;
       };
 
-      highchartsHelper.getChartData = function(mlSearch, constraints, highchartConfig, limit) {
+      highchartsHelper.getChartData = function(mlSearch, mlSearchController, constraints, highchartConfig, limit) {
         var facetNames = [highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint, highchartConfig.yAxisMLConstraint];
         var dataConfig = {
           xCategoryAxis: highchartConfig.xAxisCategoriesMLConstraint,
@@ -140,49 +140,85 @@
               }
             }
           };
-          if (filteredConstraints.length > 1) {
-            constaintOptions.search.options.tuples = tuples;
-          } else {
-            constaintOptions.search.options.values = tuples;
-          }
-          return MLRest.values('cooccurrence', {
-            format: 'json'
-          }, constaintOptions).then(
-            function(response) {
-              var data = [];
-              if (response.data['values-response']) {
-                if (filteredConstraints.length > 1) {
-                  angular.forEach(response.data['values-response'].tuple, function(tup) {
-                    var vals = tup['distinct-value'];
-                    var dataPoint = {
-                      xCategory: vals[dataConfig.xCategoryAxisIndex] ? vals[dataConfig.xCategoryAxisIndex]._value : null,
-                      x: vals[dataConfig.xAxisIndex] ? vals[dataConfig.xAxisIndex]._value : null,
-                      y: vals[dataConfig.yAxisIndex] ? vals[dataConfig.yAxisIndex]._value : null
-                    };
-                    if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
-                      valueIndexes.push(dataPoint.xCategory);
-                    }
-                    dataPoint.name = dataPoint.xCategory || dataPoint.x || dataPoint.y;
-                    dataPoint[dataConfig.frequecy] = tup.frequency;
-                    data.push(dataPoint);
-                  });
-                } else {
-                  angular.forEach(response.data['values-response']['distinct-value'], function(valueObj) {
-                    var dataPoint = {
-                      x: dataConfig.xAxisIndex > -1 ? valueObj._value : null,
-                      y: dataConfig.yAxisIndex > -1 ? valueObj._value : null
-                    };
-                    dataPoint.name = dataPoint.x || dataPoint.y;
-                    dataPoint[dataConfig.frequecy] = valueObj.frequency;
-                    data.push(dataPoint);
-                  });
+          if (mlSearchController){
+            var deferred = $q.defer();//hack for now since else requires promise...
+            //handle by getting facets
+            var responseFacets = mlSearchController.response.facets;
+            var data = [];
+            if (filteredConstraintNames.length > 1){
+              console.warn('handle me!');
+            }
+            else
+            {
+              var facetToSelect = filteredConstraintNames[0];
+              var filteredFacet = responseFacets[facetToSelect];
+              if (filteredFacet && filteredFacet.facetValues){
+                for (var value in filteredFacet.facetValues){
+                  var valueObj = filteredFacet.facetValues[value];
+                  var dataPoint = {
+                    x: dataConfig.xAxisIndex > -1 ? valueObj.value : null,
+                    y: dataConfig.yAxisIndex > -1 ? valueObj.value : null
+                  };
+                  dataPoint.name = dataPoint.x || dataPoint.y;
+                  dataPoint[dataConfig.frequecy] = valueObj.count;
+                  data.push(dataPoint);
                 }
               }
-              return {
-                data: data,
-                categories: valueIndexes
-              };
-            });
+            }
+            deferred.resolve({
+                  data: data,
+                  categories: valueIndexes
+                });
+            return deferred.promise;
+          }
+          else
+          {
+            //get data the old way
+            if (filteredConstraints.length > 1) {
+              constaintOptions.search.options.tuples = tuples;
+            } else {
+              constaintOptions.search.options.values = tuples;
+            }
+            return MLRest.values('cooccurrence', {
+              format: 'json'
+            }, constaintOptions).then(
+              function(response) {
+                var data = [];
+                if (response.data['values-response']) {
+                  if (filteredConstraints.length > 1) {
+                    angular.forEach(response.data['values-response'].tuple, function(tup) {
+                      var vals = tup['distinct-value'];
+                      var dataPoint = {
+                        xCategory: vals[dataConfig.xCategoryAxisIndex] ? vals[dataConfig.xCategoryAxisIndex]._value : null,
+                        x: vals[dataConfig.xAxisIndex] ? vals[dataConfig.xAxisIndex]._value : null,
+                        y: vals[dataConfig.yAxisIndex] ? vals[dataConfig.yAxisIndex]._value : null
+                      };
+                      if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
+                        valueIndexes.push(dataPoint.xCategory);
+                      }
+                      dataPoint.name = dataPoint.xCategory || dataPoint.x || dataPoint.y;
+                      dataPoint[dataConfig.frequecy] = tup.frequency;
+                      data.push(dataPoint);
+                    });
+                  } else {
+                    angular.forEach(response.data['values-response']['distinct-value'], function(valueObj) {
+                      var dataPoint = {
+                        x: dataConfig.xAxisIndex > -1 ? valueObj._value : null,
+                        y: dataConfig.yAxisIndex > -1 ? valueObj._value : null
+                      };
+                      dataPoint.name = dataPoint.x || dataPoint.y;
+                      dataPoint[dataConfig.frequecy] = valueObj.frequency;
+                      data.push(dataPoint);
+                    });
+                  }
+                }
+                return {
+                  data: data,
+                  categories: valueIndexes
+                };
+              });
+          }
+
         } else {
           var d = $q.defer();
           d.resolve(null);
