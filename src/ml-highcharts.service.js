@@ -32,7 +32,16 @@
             type: chartType,
             data: data
           }];
-        } else {
+        } else if (chartType === 'bubble') {
+          seriesData = _.map(data, function(dp) {
+            return {
+              type: chartType,
+              name: dp.name,
+              data: [[dp.x,dp.y,dp.z]]
+            };
+          });
+        }
+        else {
           seriesData = _.map(data, function(dp) {
             return {
               type: chartType,
@@ -108,6 +117,8 @@
           dataConfig.frequecy = 'x';
         } else if (highchartConfig.yAxisMLConstraint === '$frequency') {
           dataConfig.frequecy = 'y';
+        } else if (highchartConfig.zAxisMLConstraint === '$frequency') {
+          dataConfig.frequecy = 'z';
         }
 
         if (constraints && constraints.length) {
@@ -125,6 +136,7 @@
           dataConfig.xCategoryAxisIndex = filteredConstraintNames.indexOf(dataConfig.xCategoryAxis);
           dataConfig.xAxisIndex = filteredConstraintNames.indexOf(dataConfig.xAxis);
           dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.yAxis);
+          dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.zAxis);
           var tuples = [{
             'name': 'cooccurrence',
             'range': filteredConstraintRanges,
@@ -157,7 +169,8 @@
                   var valueObj = filteredFacet.facetValues[value];
                   var dataPoint = {
                     x: dataConfig.xAxisIndex > -1 ? valueObj.value : null,
-                    y: dataConfig.yAxisIndex > -1 ? valueObj.value : null
+                    y: dataConfig.yAxisIndex > -1 ? valueObj.value : null,
+                    z: dataConfig.zAxisIndex > -1 ? valueObj.value : null
                   };
                   dataPoint.name = dataPoint.x || dataPoint.y;
                   dataPoint[dataConfig.frequecy] = valueObj.count;
@@ -191,12 +204,13 @@
                       var dataPoint = {
                         xCategory: vals[dataConfig.xCategoryAxisIndex] ? vals[dataConfig.xCategoryAxisIndex]._value : null,
                         x: vals[dataConfig.xAxisIndex] ? vals[dataConfig.xAxisIndex]._value : null,
-                        y: vals[dataConfig.yAxisIndex] ? vals[dataConfig.yAxisIndex]._value : null
+                        y: vals[dataConfig.yAxisIndex] ? vals[dataConfig.yAxisIndex]._value : null,
+                        z: vals[dataConfig.zAxisIndex] ? vals[dataConfig.zAxisIndex]._value : null
                       };
                       if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                         valueIndexes.push(dataPoint.xCategory);
                       }
-                      dataPoint.name = dataPoint.xCategory || dataPoint.x || dataPoint.y;
+                      dataPoint.name = _.without([dataPoint.xCategory, dataPoint.x, dataPoint.y, dataPoint.z], null, undefined).join();
                       dataPoint[dataConfig.frequecy] = tup.frequency;
                       data.push(dataPoint);
                     });
@@ -234,6 +248,7 @@
           'areaspline',
           'column',
           'bar',
+          'bubble',
           'pie',
           'scatter'
         ];
