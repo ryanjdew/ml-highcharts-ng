@@ -101,15 +101,12 @@
         return chart;
       };
 
-      highchartsHelper.getChartData = function(mlSearch, mlSearchController, constraints, highchartConfig, limit) {
-        var facetNames = [highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint, highchartConfig.yAxisMLConstraint];
+      function getDataConfig(highchartConfig, filteredConstraintNames){
         var dataConfig = {
           xCategoryAxis: highchartConfig.xAxisCategoriesMLConstraint,
           xAxis: highchartConfig.xAxisMLConstraint,
           yAxis: highchartConfig.yAxisMLConstraint
         };
-
-        var valueIndexes = [];
 
         if (highchartConfig.xAxisCategoriesMLConstraint === '$frequency') {
           dataConfig.frequecy = 'xCategory';
@@ -121,61 +118,87 @@
           dataConfig.frequecy = 'z';
         }
 
-        if (constraints && constraints.length) {
-          var filteredConstraints = _.filter(constraints, function(constraint) {
+        dataConfig.xCategoryAxisIndex = filteredConstraintNames.indexOf(dataConfig.xCategoryAxis);
+        dataConfig.xAxisIndex = filteredConstraintNames.indexOf(dataConfig.xAxis);
+        dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.yAxis);
+        dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.zAxis);
+
+        return dataConfig;
+      }
+
+      function getConstraintsOnChart(constraints, facetNames) {
+        return _.filter(constraints, function(constraint) {
             return constraint && constraint.name && facetNames.indexOf(constraint.name) > -1 && constraint.range;
           }).sort(function(a, b) {
             return facetNames.indexOf(a.name) - facetNames.indexOf(b.name);
           });
-          var filteredConstraintRanges = _.map(filteredConstraints, function(constraint) {
-            return constraint.range;
-          });
+      }
+
+      function getSearchConstraintOptions(mlSearch, constraints, filteredConstraints, limit) {
+        var filteredConstraintRanges = _.map(filteredConstraints, function(constraint) {
+          return constraint.range;
+        });
+
+        var tuples = [{
+          'name': 'cooccurrence',
+          'range': filteredConstraintRanges,
+          'values-option': ['frequency-order', 'limit=' + ((limit) ? limit : '20')]
+        }];
+        var constraintOptions = {
+          'search': {
+            'options': {
+              'constraint': constraints
+            },
+            'query': (mlSearch) ? mlSearch.getQuery().query : {
+              'queries': []
+            }
+          }
+        };
+        if (filteredConstraints.length > 1) {
+          constraintOptions.search.options.tuples = tuples;
+        } else {
+          constraintOptions.search.options.values = tuples;
+        }
+        return constraintOptions;
+      }
+
+      highchartsHelper.getChartData = function(mlSearch, mlSearchController, constraints, highchartConfig, limit) {
+        var facetNames = [highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint, highchartConfig.yAxisMLConstraint];
+
+        var valueIndexes = [];
+
+        if (constraints && constraints.length) {
+          var filteredConstraints = getConstraintsOnChart(constraints, facetNames);
+
           var filteredConstraintNames = _.map(filteredConstraints, function(constraint) {
             return constraint.name;
           });
-          dataConfig.xCategoryAxisIndex = filteredConstraintNames.indexOf(dataConfig.xCategoryAxis);
-          dataConfig.xAxisIndex = filteredConstraintNames.indexOf(dataConfig.xAxis);
-          dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.yAxis);
-          dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.zAxis);
-          var tuples = [{
-            'name': 'cooccurrence',
-            'range': filteredConstraintRanges,
-            'values-option': ['frequency-order', 'limit=' + ((limit) ? limit : '20')]
-          }];
-          var constaintOptions = {
-            'search': {
-              'options': {
-                'constraint': constraints
-              },
-              'query': (mlSearch) ? mlSearch.getQuery().query : {
-                'queries': []
-              }
-            }
-          };
+
+          var dataConfig = getDataConfig(highchartConfig, filteredConstraintNames);
+
           if (mlSearchController){
             var deferred = $q.defer();//hack for now since else requires promise...
             //handle by getting facets
             var responseFacets = mlSearchController.response.facets;
             var data = [];
+
+            var facetToSelect = filteredConstraintNames[0];
+            var filteredFacet = responseFacets[facetToSelect];
+
             if (filteredConstraintNames.length > 1){
               console.warn('handle me!');
             }
-            else
-            {
-              var facetToSelect = filteredConstraintNames[0];
-              var filteredFacet = responseFacets[facetToSelect];
-              if (filteredFacet && filteredFacet.facetValues){
-                for (var value in filteredFacet.facetValues){
-                  var valueObj = filteredFacet.facetValues[value];
-                  var dataPoint = {
-                    x: dataConfig.xAxisIndex > -1 ? valueObj.value : null,
-                    y: dataConfig.yAxisIndex > -1 ? valueObj.value : null,
-                    z: dataConfig.zAxisIndex > -1 ? valueObj.value : null
-                  };
-                  dataPoint.name = dataPoint.x || dataPoint.y;
-                  dataPoint[dataConfig.frequecy] = valueObj.count;
-                  data.push(dataPoint);
-                }
+            else if (filteredFacet && filteredFacet.facetValues){
+              for (var value in filteredFacet.facetValues){
+                var valueObj = filteredFacet.facetValues[value];
+                var dataPoint = {
+                  x: dataConfig.xAxisIndex > -1 ? valueObj.value : null,
+                  y: dataConfig.yAxisIndex > -1 ? valueObj.value : null,
+                  z: dataConfig.zAxisIndex > -1 ? valueObj.value : null
+                };
+                dataPoint.name = dataPoint.x || dataPoint.y;
+                dataPoint[dataConfig.frequecy] = valueObj.count;
+                data.push(dataPoint);
               }
             }
             deferred.resolve({
@@ -187,14 +210,10 @@
           else
           {
             //get data the old way
-            if (filteredConstraints.length > 1) {
-              constaintOptions.search.options.tuples = tuples;
-            } else {
-              constaintOptions.search.options.values = tuples;
-            }
+            var constraintOptions = getSearchConstraintOptions(mlSearch, constraints, filteredConstraints, limit);
             return MLRest.values('cooccurrence', {
               format: 'json'
-            }, constaintOptions).then(
+            }, constraintOptions).then(
               function(response) {
                 var data = [];
                 if (response.data['values-response']) {
