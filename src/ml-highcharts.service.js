@@ -176,7 +176,8 @@
 
           var dataConfig = getDataConfig(highchartConfig, filteredConstraintNames);
 
-          if (mlSearchController){
+          //use search controller for faceted values...
+          if (mlSearchController && filteredConstraintNames.length <= 1){
             var deferred = $q.defer();//hack for now since else requires promise...
             //handle by getting facets
             var responseFacets = mlSearchController.response.facets;
@@ -185,10 +186,7 @@
             var facetToSelect = filteredConstraintNames[0];
             var filteredFacet = responseFacets[facetToSelect];
 
-            if (filteredConstraintNames.length > 1){
-              console.warn('handle me!');
-            }
-            else if (filteredFacet && filteredFacet.facetValues){
+            if (filteredFacet && filteredFacet.facetValues){
               for (var value in filteredFacet.facetValues){
                 var valueObj = filteredFacet.facetValues[value];
                 var dataPoint = {
@@ -202,9 +200,9 @@
               }
             }
             deferred.resolve({
-                  data: data,
-                  categories: valueIndexes
-                });
+              data: data,
+              categories: valueIndexes
+            });
             return deferred.promise;
           }
           else
