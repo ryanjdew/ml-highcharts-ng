@@ -3,7 +3,7 @@ AngularJS library for working with MarkLogic and Highcharts
 
 #### getting started
 
-    bower install ml-highcharts-ng
+    bower install ml-highcharts-ng --save
 
 #### services
 
