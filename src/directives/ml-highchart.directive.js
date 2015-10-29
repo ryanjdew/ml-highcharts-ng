@@ -22,10 +22,6 @@
     .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
 
       function link(scope, element, attrs) {
-        if (scope.mlSearchController && !scope.mlSearch){
-          scope.mlSearch = scope.mlSearchController.mlSearch;
-          console.warn('Please link mlSearch in mlHighCharts directive');
-        }
         if (!scope.mlSearch) {
           scope.mlSearch = searchFactory.newContext();
         }
@@ -50,19 +46,9 @@
           };
         };
 
-        if (!scope.mlSearchController){
-          //link on search if controller is unavailable
-          var origSearchFun = scope.mlSearch.search;
-          scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
-          loadData();
-        }
-        else
-        {
-          //otherwise use the updateSearchResults since it contains facet results
-          var origUpdateFun = scope.mlSearchController.updateSearchResults;
-          scope.mlSearchController.updateSearchResults = reloadChartsDecorator(origUpdateFun);
-          loadData();
-        }
+        var origSearchFun = scope.mlSearch.search;
+        scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
+        loadData();
 
       }
 
@@ -71,7 +57,6 @@
         templateUrl: '/ml-highcharts/templates/ml-highchart.html',
         scope: {
           'mlSearch': '=',
-          'mlSearchController': '=',
           'highchartConfig': '=',
           'callback': '&'
         },

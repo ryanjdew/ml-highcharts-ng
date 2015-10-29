@@ -32,6 +32,11 @@ describe('HighchartsHelper#mock-service', function () {
 
   beforeEach(module(function($provide) {
     $provide.value('MLRest', mockMLRest);
+    mockMLRest.search = jasmine.createSpy('values').and.callFake(function() {
+        var d = $q.defer();
+        d.resolve({ data: { facets: {}, results: [] }});
+        return d.promise;
+      });
   }));
 
   beforeEach(inject(function ($injector) {
@@ -75,7 +80,7 @@ describe('HighchartsHelper#mock-service', function () {
           expectedSeriesSum += results[j].frequency;
         }
       }
-      var seriesSum = 0
+      var seriesSum = 0;
       for (var k = 0; k < populatedConfig.series[i].data.length; k++) {
         seriesSum += populatedConfig.series[i].data[k][1];
       }

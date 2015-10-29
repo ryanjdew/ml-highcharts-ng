@@ -28,8 +28,8 @@
               <label>xAxis Categories</label>
             </div>
             <div class="col-sm-6">
-              <ul style="min-height:20px;" as-sortable="xSortOptions" ng-model="xAxisCategoriesMLConstraint">
-                <li class="btn btn-primary" ng-repeat="key in xAxisCategoriesMLConstraint" as-sortable-item as-sortable-item-handle>{{key}}</li>
+              <ul style="min-height:20px;border:1px dotted black;" as-sortable="xSortOptions" ng-model="xAxisCategoriesMLConstraint">
+                <li class="btn btn-default" ng-repeat="key in xAxisCategoriesMLConstraint" as-sortable-item as-sortable-item-handle>{{key}}</li>
               </ul>
             </div>
           </div>
@@ -38,8 +38,8 @@
               <label>xAxis</label>
             </div>
             <div class="col-sm-6" as-sortable="xSortOptions" ng-model="xAxisMLConstraint">
-              <ul style="min-height:20px;">
-                <li class="btn btn-primary" ng-repeat="key in xAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key}}</li>
+              <ul style="min-height:20px;border:1px dotted black;">
+                <li class="btn btn-default" ng-repeat="key in xAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key}}</li>
               </ul>
             </div>
           </div>
@@ -48,8 +48,18 @@
               <label>yAxis</label>
             </div>
             <div class="col-sm-6" as-sortable="xSortOptions" ng-model="yAxisMLConstraint">
-              <ul style="min-heigth:20px;">
-                <li class="btn btn-primary" ng-repeat="key in yAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key}}</li>
+              <ul style="min-heigth:20px;border:1px dotted black;">
+                <li class="btn btn-default" ng-repeat="key in yAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key}}</li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-sm-12">
+            <div class="col-sm-6">
+              <label>zAxis</label>
+            </div>
+            <div class="col-sm-6" as-sortable="xSortOptions" ng-model="zAxisMLConstraint">
+              <ul style="min-heigth:20px;border:1px dotted black;">
+                <li class="btn btn-default" ng-repeat="key in zAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key}}</li>
               </ul>
             </div>
           </div>
@@ -69,10 +79,18 @@
                <input type="text" ng-model="highchartConfig.yAxis.title.text" />              
             </div>
           </div>
+          <div class="col-sm-12">
+            <div class="col-sm-6">
+              <label>zAxis Label</label>
+            </div>
+            <div class="col-sm-6">
+               <input type="text" ng-model="highchartConfig.zAxis.title.text" />              
+            </div>
+          </div>
         </div>
         <div class="col-sm-6" as-sortable="facetSortOptions" ng-model="chartFacetOptions" style="min-heigth:20px;">
           <label>Values</label>
-          <ul>
+          <ul style="border:1px dotted black;">
             <li class="btn btn-default" ng-repeat="key in chartFacetOptions" as-sortable-item as-sortable-item-handle>{{key}}</li>
           </ul>
         </div>
