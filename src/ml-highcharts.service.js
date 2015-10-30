@@ -176,11 +176,6 @@
 
           var dataConfig = getDataConfig(highchartConfig, filteredConstraintNames);
 
-          console.log('mlSearchController');
-          console.log(mlSearchController);
-
-          console.log('filteredConstraintNames');
-          console.log(filteredConstraintNames);
           //use search controller for faceted values...
           if (mlSearchController && filteredConstraintNames.length <= 1){
             var deferred = $q.defer();//hack for now since else requires promise...
@@ -212,7 +207,6 @@
           }
           else
           {
-
             //get data the old way
             var constraintOptions = getSearchConstraintOptions(mlSearch, constraints, filteredConstraints, limit);
             return MLRest.values('cooccurrence', {
