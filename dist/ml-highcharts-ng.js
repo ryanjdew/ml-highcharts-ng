@@ -6,6 +6,365 @@
 }());
 (function() {
   'use strict';
+
+  angular.module('ml.highcharts')
+    .factory('HighchartsHelper', ['$q', 'MLRest', 'MLSearchFactory', function($q, MLRest, MLSearchFactory) {
+      var highchartsHelper = {};
+      highchartsHelper.seriesData = function(data, chartType, categories) {
+        var seriesData = [];
+        if (categories.length) {
+          var mappedXValues = {};
+          angular.forEach(data, function(dp) {
+            if (!mappedXValues[dp.x]) {
+              mappedXValues[dp.x] = [];
+            }
+            var dpCategoryIndex = categories.indexOf(dp.xCategory);
+            mappedXValues[dp.x][dpCategoryIndex] = [dp.xCategory, dp.y];
+          });
+          angular.forEach(mappedXValues, function(xVal, xValKey) {
+            angular.forEach(categories, function(cat, index) {
+              if (!xVal[index]) {
+                xVal[index] = [cat, 0];
+              }
+            });
+            seriesData.push({
+              'type': chartType,
+              'name': xValKey,
+              'data': xVal
+            });
+          });
+        } else if (chartType === 'pie') {
+          seriesData = [{
+            type: chartType,
+            data: data
+          }];
+        } else if (chartType === 'bubble') {
+          seriesData = _.map(data, function(dp) {
+            return {
+              type: chartType,
+              name: dp.name,
+              data: [[dp.x,dp.y,dp.z]]
+            };
+          });
+        }
+        else {
+          seriesData = _.map(data, function(dp) {
+            return {
+              type: chartType,
+              name: dp.x,
+              data: [dp.y]
+            };
+          });
+        }
+        return seriesData;
+      };
+
+      highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, mlSearchController, callback) {
+        var chartType = highchartConfig.options.chart.type;
+        var chart = angular.copy(highchartConfig);
+        if (!mlSearch) {
+          mlSearch = MLSearchFactory.newContext();
+        }
+        mlSearch.getStoredOptions('all').then(function(data) {
+          if (data.options && data.options.constraint) {
+            var availableConstraints = _.filter(data.options.constraint, function(con) {
+              var value = con.range || con.collection;
+              return (value && value.facet);
+            });
+            highchartsHelper.getChartData(mlSearch, mlSearchController, availableConstraints, highchartConfig, highchartConfig.resultLimit).then(function(values) {
+              chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories);
+              if (values.categories && values.categories.length) {
+                chart.xAxis.categories = values.categories;
+              }
+            });
+          }
+        });
+        if (callback) {
+          chart.options.plotOptions = {
+            series: {
+              cursor: 'pointer',
+              point: {
+                events: {
+                  click: function() {
+                    var value = this.name || this.series.name;
+                    if (value.data.length === 1) {
+                      callback({
+                        facet: value.data[0].__key,
+                        value: value
+                      });
+                    } else {
+                      callback({
+                        facet: this.series.name,
+                        value: value
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          };
+        }
+        return chart;
+      };
+
+      function getDataConfig(highchartConfig, filteredConstraintNames){
+        var dataConfig = {
+          xCategoryAxis: highchartConfig.xAxisCategoriesMLConstraint,
+          xAxis: highchartConfig.xAxisMLConstraint,
+          yAxis: highchartConfig.yAxisMLConstraint
+        };
+
+        if (highchartConfig.xAxisCategoriesMLConstraint === '$frequency') {
+          dataConfig.frequecy = 'xCategory';
+        } else if (highchartConfig.xAxisMLConstraint === '$frequency') {
+          dataConfig.frequecy = 'x';
+        } else if (highchartConfig.yAxisMLConstraint === '$frequency') {
+          dataConfig.frequecy = 'y';
+        } else if (highchartConfig.zAxisMLConstraint === '$frequency') {
+          dataConfig.frequecy = 'z';
+        }
+
+        dataConfig.xCategoryAxisIndex = filteredConstraintNames.indexOf(dataConfig.xCategoryAxis);
+        dataConfig.xAxisIndex = filteredConstraintNames.indexOf(dataConfig.xAxis);
+        dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.yAxis);
+        dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.zAxis);
+
+        return dataConfig;
+      }
+
+      function getConstraintsOnChart(constraints, facetNames) {
+        return _.filter(constraints, function(constraint) {
+            return constraint && constraint.name && facetNames.indexOf(constraint.name) > -1 && constraint.range;
+          }).sort(function(a, b) {
+            return facetNames.indexOf(a.name) - facetNames.indexOf(b.name);
+          });
+      }
+
+      function getSearchConstraintOptions(mlSearch, constraints, filteredConstraints, limit) {
+        var filteredConstraintRanges = _.map(filteredConstraints, function(constraint) {
+          return constraint.range;
+        });
+
+        var tuples = [{
+          'name': 'cooccurrence',
+          'range': filteredConstraintRanges,
+          'values-option': ['frequency-order', 'limit=' + ((limit) ? limit : '20')]
+        }];
+        var constraintOptions = {
+          'search': {
+            'options': {
+              'constraint': constraints
+            },
+            'query': (mlSearch) ? mlSearch.getQuery().query : {
+              'queries': []
+            }
+          }
+        };
+        if (filteredConstraints.length > 1) {
+          constraintOptions.search.options.tuples = tuples;
+        } else {
+          constraintOptions.search.options.values = tuples;
+        }
+        return constraintOptions;
+      }
+
+      highchartsHelper.getChartData = function(mlSearch, mlSearchController, constraints, highchartConfig, limit) {
+        var facetNames = [highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint, highchartConfig.yAxisMLConstraint];
+
+        var valueIndexes = [];
+
+        if (constraints && constraints.length) {
+          var filteredConstraints = getConstraintsOnChart(constraints, facetNames);
+
+          var filteredConstraintNames = _.map(filteredConstraints, function(constraint) {
+            return constraint.name;
+          });
+
+          var dataConfig = getDataConfig(highchartConfig, filteredConstraintNames);
+
+          //use search controller for faceted values...
+          if (mlSearchController && filteredConstraintNames.length <= 1){
+            var deferred = $q.defer();//hack for now since else requires promise...
+            //handle by getting facets
+            var responseFacets = mlSearchController.response.facets;
+            var data = [];
+
+            var facetToSelect = filteredConstraintNames[0];
+            var filteredFacet = responseFacets[facetToSelect];
+
+            if (filteredFacet && filteredFacet.facetValues){
+              for (var value in filteredFacet.facetValues){
+                var valueObj = filteredFacet.facetValues[value];
+                var dataPoint = {
+                  x: dataConfig.xAxisIndex > -1 ? valueObj.value : null,
+                  y: dataConfig.yAxisIndex > -1 ? valueObj.value : null,
+                  z: dataConfig.zAxisIndex > -1 ? valueObj.value : null
+                };
+                dataPoint.name = dataPoint.x || dataPoint.y;
+                dataPoint[dataConfig.frequecy] = valueObj.count;
+                data.push(dataPoint);
+              }
+            }
+            deferred.resolve({
+              data: data,
+              categories: valueIndexes
+            });
+            return deferred.promise;
+          }
+          else
+          {
+            //get data the old way
+            var constraintOptions = getSearchConstraintOptions(mlSearch, constraints, filteredConstraints, limit);
+            return MLRest.values('cooccurrence', {
+              format: 'json'
+            }, constraintOptions).then(
+              function(response) {
+                var data = [];
+                if (response.data['values-response']) {
+                  if (filteredConstraints.length > 1) {
+                    angular.forEach(response.data['values-response'].tuple, function(tup) {
+                      var vals = tup['distinct-value'];
+                      var dataPoint = {
+                        xCategory: vals[dataConfig.xCategoryAxisIndex] ? vals[dataConfig.xCategoryAxisIndex]._value : null,
+                        x: vals[dataConfig.xAxisIndex] ? vals[dataConfig.xAxisIndex]._value : null,
+                        y: vals[dataConfig.yAxisIndex] ? vals[dataConfig.yAxisIndex]._value : null,
+                        z: vals[dataConfig.zAxisIndex] ? vals[dataConfig.zAxisIndex]._value : null
+                      };
+                      if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
+                        valueIndexes.push(dataPoint.xCategory);
+                      }
+                      dataPoint.name = _.without([dataPoint.xCategory, dataPoint.x, dataPoint.y, dataPoint.z], null, undefined).join();
+                      dataPoint[dataConfig.frequecy] = tup.frequency;
+                      data.push(dataPoint);
+                    });
+                  } else {
+                    angular.forEach(response.data['values-response']['distinct-value'], function(valueObj) {
+                      var dataPoint = {
+                        x: dataConfig.xAxisIndex > -1 ? valueObj._value : null,
+                        y: dataConfig.yAxisIndex > -1 ? valueObj._value : null
+                      };
+                      dataPoint.name = dataPoint.x || dataPoint.y;
+                      dataPoint[dataConfig.frequecy] = valueObj.frequency;
+                      data.push(dataPoint);
+                    });
+                  }
+                }
+                return {
+                  data: data,
+                  categories: valueIndexes
+                };
+              });
+          }
+
+        } else {
+          var d = $q.defer();
+          d.resolve(null);
+          return d.promise;
+        }
+      };
+
+      highchartsHelper.chartTypes = function() {
+        return [
+          'line',
+          'spline',
+          'area',
+          'areaspline',
+          'column',
+          'bar',
+          'bubble',
+          'pie',
+          'scatter'
+        ];
+      };
+
+      return highchartsHelper;
+    }]);
+})();
+
+(function() {
+
+  'use strict';
+
+  /**
+   * angular element directive; a highchart based off of MarkLogic values result.
+   *
+   * attributes:
+   *
+   * - `highchart-config`: a reference to the model with chart config information
+   * - `ml-search`: optional. An mlSearch context to filter query.
+   * - `callback`: optional. A function reference to callback when a chart item is selected
+   *
+   * Example:
+   *
+   * ```
+   * <ml-highchart highchart-config="model.highChartConfig" ml-search="mlSearch"></ml-highchart>```
+   *
+   * @namespace ml-highchart
+   */
+  angular.module('ml.highcharts')
+    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
+
+      function link(scope, element, attrs) {
+        if (scope.mlSearchController && !scope.mlSearch){
+          scope.mlSearch = scope.mlSearchController.mlSearch;
+          console.warn('Please link mlSearch in mlHighCharts directive');
+        }
+        if (!scope.mlSearch) {
+          scope.mlSearch = searchFactory.newContext();
+        }
+        var loadData = function() {
+          if (scope.highchartConfig) {
+            scope.populatedConfig = HighchartsHelper.chartFromConfig(scope.highchartConfig, scope.mlSearch, scope.mlSearchController, scope.callback);
+          }
+        };
+        var reloadChartsDecorator = function (fn) {
+          return function () {
+            var results = fn.apply(this, arguments);
+            if (results && angular.isFunction(results.then)) {
+              // Then this is promise
+              return results.then(function(data){
+                loadData();
+                return data;
+              });
+            } else {
+              loadData();
+              return results;
+            }
+          };
+        };
+
+        if (!scope.mlSearchController){
+          //link on search if controller is unavailable
+          var origSearchFun = scope.mlSearch.search;
+          scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
+          loadData();
+        }
+        else
+        {
+          //otherwise use the updateSearchResults since it contains facet results
+          var origUpdateFun = scope.mlSearchController.updateSearchResults;
+          scope.mlSearchController.updateSearchResults = reloadChartsDecorator(origUpdateFun);
+          loadData();
+        }
+
+      }
+
+      return {
+        restrict: 'E',
+        templateUrl: '/ml-highcharts/templates/ml-highchart.html',
+        scope: {
+          'mlSearch': '=',
+          'mlSearchController': '=',
+          'highchartConfig': '=',
+          'callback': '&'
+        },
+        link: link
+      };
+    }]);
+})();
+
+(function() {
+  'use strict';
   /**
    * @ngdoc controller
    * @kind constructor
@@ -142,277 +501,3 @@
     }
   ]);
 }());
-(function() {
-
-  'use strict';
-
-  /**
-   * angular element directive; a highchart based off of MarkLogic values result.
-   *
-   * attributes:
-   *
-   * - `highchart-config`: a reference to the model with chart config information
-   * - `ml-search`: optional. An mlSearch context to filter query.
-   * - `callback`: optional. A function reference to callback when a chart item is selected
-   *
-   * Example:
-   *
-   * ```
-   * <ml-highchart highchart-config="model.highChartConfig" ml-search="mlSearch"></ml-highchart>```
-   *
-   * @namespace ml-highchart
-   */
-  angular.module('ml.highcharts')
-    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
-
-      function link(scope, element, attrs) {
-        if (!scope.mlSearch) {
-          scope.mlSearch = searchFactory.newContext();
-        }
-        var loadData = function() {
-          if (scope.highchartConfig) {
-            scope.populatedConfig = HighchartsHelper.chartFromConfig(scope.highchartConfig, scope.mlSearch, scope.callback);
-          }
-        };
-        var reloadChartsDecorator = function (fn) {
-          return function () {
-            var results = fn.apply(this, arguments);
-            if (results && angular.isFunction(results.then)) {
-              // Then this is promise
-              return results.then(function(data){
-                loadData();
-                return data;
-              });
-            } else {
-              loadData();
-              return results;
-            }
-          };
-        };
-
-        var origSearchFun = scope.mlSearch.search;
-        scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
-        loadData();
-      }
-      
-      return {
-        restrict: 'E',
-        templateUrl: '/ml-highcharts/templates/ml-highchart.html',
-        scope: {
-          'mlSearch': '=',
-          'highchartConfig': '=',
-          'callback': '&'
-        },
-        link: link
-      };
-    }]);
-})();
-
-(function() {
-  'use strict';
-
-  angular.module('ml.highcharts')
-    .factory('HighchartsHelper', ['$q', 'MLRest', 'MLSearchFactory', function($q, MLRest, MLSearchFactory) {
-      var highchartsHelper = {};
-      highchartsHelper.seriesData = function(data, chartType, categories) {
-        var seriesData = [];
-        if (categories.length) {
-          var mappedXValues = {};
-          angular.forEach(data, function(dp) {
-            if (!mappedXValues[dp.x]) {
-              mappedXValues[dp.x] = [];
-            }
-            var dpCategoryIndex = categories.indexOf(dp.xCategory);
-            mappedXValues[dp.x][dpCategoryIndex] = [dp.xCategory, dp.y];
-          });
-          angular.forEach(mappedXValues, function(xVal, xValKey) {
-            angular.forEach(categories, function(cat, index) {
-              if (!xVal[index]) {
-                xVal[index] = [cat, 0];
-              }
-            });
-            seriesData.push({
-              'type': chartType,
-              'name': xValKey,
-              'data': xVal
-            });
-          });
-        } else if (chartType === 'pie') {
-          seriesData = [{
-            type: chartType,
-            data: data
-          }];
-        } else {
-          seriesData = _.map(data, function(dp) {
-            return {
-              type: chartType,
-              name: dp.x,
-              data: [dp.y]
-            };
-          });
-        }
-        return seriesData;
-      };
-
-      highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, callback) {
-        var chartType = highchartConfig.options.chart.type;
-        var chart = angular.copy(highchartConfig);
-        if (!mlSearch) {
-          mlSearch = MLSearchFactory.newContext();
-        }
-        mlSearch.getStoredOptions('all').then(function(data) {
-          if (data.options && data.options.constraint) {
-            var availableConstraints = _.filter(data.options.constraint, function(con) {
-              var value = con.range || con.collection;
-              return (value && value.facet);
-            });
-            highchartsHelper.getChartData(mlSearch, availableConstraints, highchartConfig, highchartConfig.resultLimit).then(function(values) {
-              chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories);
-              if (values.categories && values.categories.length) {
-                chart.xAxis.categories = values.categories;
-              }
-            });
-          }
-        });
-        if (callback) {
-          chart.options.plotOptions = {
-            series: {
-              cursor: 'pointer',
-              point: {
-                events: {
-                  click: function() {
-                    var value = this.name || this.series.name;
-                    if (value.data.length === 1) {
-                      callback({
-                        facet: value.data[0].__key,
-                        value: value
-                      });
-                    } else {
-                      callback({
-                        facet: this.series.name,
-                        value: value
-                      });
-                    }
-                  }
-                }
-              }
-            }
-          };
-        }
-        return chart;
-      };
-
-      highchartsHelper.getChartData = function(mlSearch, constraints, highchartConfig, limit) {
-        var facetNames = [highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint, highchartConfig.yAxisMLConstraint];
-        var dataConfig = {
-          xCategoryAxis: highchartConfig.xAxisCategoriesMLConstraint,
-          xAxis: highchartConfig.xAxisMLConstraint,
-          yAxis: highchartConfig.yAxisMLConstraint
-        };
-
-        var valueIndexes = [];
-
-        if (highchartConfig.xAxisCategoriesMLConstraint === '$frequency') {
-          dataConfig.frequecy = 'xCategory';
-        } else if (highchartConfig.xAxisMLConstraint === '$frequency') {
-          dataConfig.frequecy = 'x';
-        } else if (highchartConfig.yAxisMLConstraint === '$frequency') {
-          dataConfig.frequecy = 'y';
-        }
-
-        if (constraints && constraints.length) {
-          var filteredConstraints = _.filter(constraints, function(constraint) {
-            return constraint && constraint.name && facetNames.indexOf(constraint.name) > -1 && constraint.range;
-          }).sort(function(a, b) {
-            return facetNames.indexOf(a.name) - facetNames.indexOf(b.name);
-          });
-          var filteredConstraintRanges = _.map(filteredConstraints, function(constraint) {
-            return constraint.range;
-          });
-          var filteredConstraintNames = _.map(filteredConstraints, function(constraint) {
-            return constraint.name;
-          });
-          dataConfig.xCategoryAxisIndex = filteredConstraintNames.indexOf(dataConfig.xCategoryAxis);
-          dataConfig.xAxisIndex = filteredConstraintNames.indexOf(dataConfig.xAxis);
-          dataConfig.yAxisIndex = filteredConstraintNames.indexOf(dataConfig.yAxis);
-          var tuples = [{
-            'name': 'cooccurrence',
-            'range': filteredConstraintRanges,
-            'values-option': ['frequency-order', 'limit=' + ((limit) ? limit : '20')]
-          }];
-          var constaintOptions = {
-            'search': {
-              'options': {
-                'constraint': constraints
-              },
-              'query': (mlSearch) ? mlSearch.getQuery().query : {
-                'queries': []
-              }
-            }
-          };
-          if (filteredConstraints.length > 1) {
-            constaintOptions.search.options.tuples = tuples;
-          } else {
-            constaintOptions.search.options.values = tuples;
-          }
-          return MLRest.values('cooccurrence', {
-            format: 'json'
-          }, constaintOptions).then(
-            function(response) {
-              var data = [];
-              if (response.data['values-response']) {
-                if (filteredConstraints.length > 1) {
-                  angular.forEach(response.data['values-response'].tuple, function(tup) {
-                    var vals = tup['distinct-value'];
-                    var dataPoint = {
-                      xCategory: vals[dataConfig.xCategoryAxisIndex] ? vals[dataConfig.xCategoryAxisIndex]._value : null,
-                      x: vals[dataConfig.xAxisIndex] ? vals[dataConfig.xAxisIndex]._value : null,
-                      y: vals[dataConfig.yAxisIndex] ? vals[dataConfig.yAxisIndex]._value : null
-                    };
-                    if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
-                      valueIndexes.push(dataPoint.xCategory);
-                    }
-                    dataPoint.name = dataPoint.xCategory || dataPoint.x || dataPoint.y;
-                    dataPoint[dataConfig.frequecy] = tup.frequency;
-                    data.push(dataPoint);
-                  });
-                } else {
-                  angular.forEach(response.data['values-response']['distinct-value'], function(valueObj) {
-                    var dataPoint = {
-                      x: dataConfig.xAxisIndex > -1 ? valueObj._value : null,
-                      y: dataConfig.yAxisIndex > -1 ? valueObj._value : null
-                    };
-                    dataPoint.name = dataPoint.x || dataPoint.y;
-                    dataPoint[dataConfig.frequecy] = valueObj.frequency;
-                    data.push(dataPoint);
-                  });
-                }
-              }
-              return {
-                data: data,
-                categories: valueIndexes
-              };
-            });
-        } else {
-          var d = $q.defer();
-          d.resolve(null);
-          return d.promise;
-        }
-      };
-
-      highchartsHelper.chartTypes = function() {
-        return [
-          'line',
-          'spline',
-          'area',
-          'areaspline',
-          'column',
-          'bar',
-          'pie',
-          'scatter'
-        ];
-      };
-
-      return highchartsHelper;
-    }]);
-})();
