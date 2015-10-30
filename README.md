@@ -15,6 +15,28 @@ AngularJS library for working with MarkLogic and Highcharts
 
 #### example
 
+Search constraint with buckets:
+``` 
+  <constraint name="Years">
+    <range type="xs:date" facet="true">
+      <element ns="http://marklogic.com/flights" name="departure-date"/>
+
+    <bucket ge="2016-01-01" name="future"></bucket>
+      <bucket lt="2016-01-01" ge="2015-01-01" name="2015"></bucket>
+      <bucket lt="2015-01-01" ge="2014-01-01" name="2014"></bucket>
+      <bucket lt="2014-01-01" ge="2013-01-01" name="2013"></bucket>
+      <bucket lt="2013-01-01" ge="2012-01-01" name="2012"></bucket>
+      <bucket lt="2012-01-01" ge="2011-01-01" name="2011"></bucket>
+      <bucket lt="2011-01-01" ge="2010-01-01" name="2010"></bucket>
+      <bucket lt="2010-01-01" name="past"></bucket>
+
+      <facet-option>descending</facet-option>
+    </range>
+  </constraint>
+
+```
+
+
 app.js
 ```javascript
 (function() {
@@ -44,11 +66,11 @@ app.js
       },
       'xAxis': {
         'title': {
-          'text': 'Ingredients'
+          'text': 'Years'
         }
       },
       // constraint name for x axis
-      'xAxisMLConstraint': 'Ingredients',
+      'xAxisMLConstraint': 'Years',
       // optional constraint name for categorizing x axis values
       'dataPointNameMLConstraint': 'Category',
       'yAxis': {
@@ -72,10 +94,11 @@ app.js
     };
   }
 })();
+
 ``` 
 html 
 ```html
-<ml-highchart highchart-config="ctrl.highchartConfig" ml-search="ctrl.mlSearch"></ml-highchart>
+<ml-highchart highchart-config="ctrl.highchartConfig" ml-search="ctrl.mlSearch" ml-search-controller="ctrl"></ml-highchart>
 ```
 html using a structured query 
 ```html
