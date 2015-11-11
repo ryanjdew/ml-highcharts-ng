@@ -660,8 +660,14 @@
                   angular.forEach(dataConfig.aggregates[aggregatedConstraint.name], function(aggregateInfo) {
                     angular.forEach(facetData, function(dataPoint) {
                       var aggQueries = _.without(_.map(dataPoint, function(dpValue, key) {
-                        if (dpValue && dataConfig[key + 'Axis'] && dataConfig[key + 'Axis'] !== '$frequency') {
-                          return constraintQuery(dataConfig[key + 'Axis'], dpValue);
+                        var dataConfigInfo = dataConfig[key + 'Axis'];
+                        if (key === 'name') {
+                          dataConfigInfo = dataConfig.dataPointName;
+                        } else if (key === 'seriesName') {
+                          dataConfigInfo = dataConfig.seriesName;
+                        }
+                        if (dpValue && dataConfigInfo && dataConfigInfo !== '$frequency') {
+                          return constraintQuery(dataConfigInfo, dpValue);
                         } else {
                           return null;
                         }
