@@ -54,13 +54,14 @@ describe('HighchartsHelper#mock-service', function () {
   }));
 
   it('should transform values to chart series', function() {
-    var populatedConfig = highchartsHelper.chartFromConfig(valuesHighchartConfig);
-    $rootScope.$apply();
-    var results = mockValuesResults['values-response']['distinct-value'];
-    for (var i = 0; i < results.length; i++) {
-      expect(populatedConfig.series[i].data[0]).toEqual(results[i].frequency);
-      expect(populatedConfig.series[i].name).toEqual(results[i]._value);
-    }
+    highchartsHelper.chartFromConfig(valuesHighchartConfig).then(function(populatedConfig) {
+      var results = mockValuesResults['values-response']['distinct-value'];
+      for (var i = 0; i < results.length; i++) {
+        expect(populatedConfig.series[0].data[i].y).toEqual(results[i].frequency);
+        expect(populatedConfig.series[0].data[i].name).toEqual(results[i]._value);
+      }
+    });
+    $rootScope.$digest();
   });
 
   it('should transform tuples to chart series', function() {
@@ -69,23 +70,25 @@ describe('HighchartsHelper#mock-service', function () {
         d.resolve({ data: mockTuplesResults });
         return d.promise;
       });
-    var populatedConfig = highchartsHelper.chartFromConfig(tuplesHighchartConfig);
-    $rootScope.$apply();
-    var results = mockTuplesResults['values-response'].tuple;
-    for (var i = 0; i < populatedConfig.series.length; i++) {
-      var seriesName = populatedConfig.series[i].name;
-      var expectedSeriesSum = 0;
-      for (var j = 0; j < results.length; j++) {
-        if (seriesName === results[j]['distinct-value'][1]._value) {
-          expectedSeriesSum += results[j].frequency;
+    highchartsHelper.chartFromConfig(tuplesHighchartConfig).then(function(populatedConfig) {
+      var results = mockTuplesResults['values-response'].tuple;
+      for (var i = 0; i < populatedConfig.xAxis.categories.length; i++) {
+        var seriesName = populatedConfig.xAxis.categories[i];
+        var expectedSeriesSum = 0;
+        for (var j = 0; j < results.length; j++) {
+          if (seriesName === results[j]['distinct-value'][1]._value) {
+            expectedSeriesSum += results[j].frequency;
+          }
         }
+        var seriesSum = 0;
+
+        for (var k = 0; k < populatedConfig.series.length; k++) {
+          seriesSum += populatedConfig.series[k].data[i].y;
+        }
+        expect(expectedSeriesSum).toEqual(seriesSum);
       }
-      var seriesSum = 0;
-      for (var k = 0; k < populatedConfig.series[i].data.length; k++) {
-        seriesSum += populatedConfig.series[i].data[k][1];
-      }
-      expect(expectedSeriesSum).toEqual(seriesSum);
-    }
+    });
+    $rootScope.$digest();
   });
 
 });

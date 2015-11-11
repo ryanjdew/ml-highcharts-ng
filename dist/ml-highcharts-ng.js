@@ -5,91 +5,329 @@
 
 }());
 (function() {
+
+  'use strict';
+
+  /**
+   * angular element directive; a highchart based off of MarkLogic values result.
+   *
+   * attributes:
+   *
+   * - `highchart-config`: a reference to the model with chart config information
+   * - `ml-search`: optional. An mlSearch context to filter query.
+   * - `callback`: optional. A function reference to callback when a chart item is selected
+   *
+   * Example:
+   *
+   * ```
+   * <ml-highchart highchart-config="model.highChartConfig" ml-search="mlSearch"></ml-highchart>```
+   *
+   * @namespace ml-highchart
+   */
+  angular.module('ml.highcharts')
+    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
+
+      function link(scope, element, attrs) {
+        if (!scope.mlSearch) {
+          scope.mlSearch = searchFactory.newContext();
+        }
+        var loadData = function() {
+          if (scope.highchartConfig) {
+            HighchartsHelper.chartFromConfig(
+              scope.highchartConfig, scope.mlSearch,
+              scope.callback).then(function(populatedConfig) {
+              scope.populatedConfig = populatedConfig;
+            });
+          }
+        };
+        var reloadChartsDecorator = function(fn) {
+          return function() {
+            var results = fn.apply(this, arguments);
+            if (results && angular.isFunction(results.then)) {
+              // Then this is promise
+              return results.then(function(data) {
+                loadData();
+                return data;
+              });
+            } else {
+              loadData();
+              return results;
+            }
+          };
+        };
+
+        var origSearchFun = scope.mlSearch.search;
+        scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
+        loadData();
+
+      }
+
+      return {
+        restrict: 'E',
+        templateUrl: '/ml-highcharts/templates/ml-highchart.html',
+        scope: {
+          'mlSearch': '=',
+          'highchartConfig': '=',
+          'callback': '&'
+        },
+        link: link
+      };
+    }]);
+})();
+
+(function() {
+  'use strict';
+  /**
+   * @ngdoc controller
+   * @kind constructor
+   * @name EditChartConfigCtrl
+   * @description
+   * Controller for {@link editChartConfigDialog}. The controller is injected by the
+   * $modal service. Provides a user interface for configuring a highchart.
+   * See <a href="http://angular-ui.github.io/bootstrap/"
+   * target="_blank">ui.bootstrap.modal</a> for more information.
+   *
+   * @param {ui.bootstrap.modal.$modalInstance} $modalInstance (injected)
+   * @param {angular.Scope} $scope (injected)
+   * @param {ml.highcharts.HighchartsHelper} HighchartsHelper (injected)
+   * @param {object} facets object
+   * @param {object} highchartConfig object
+   * @param {ml.search.MLSearchFactory} MLSearchFactory (injected)
+   *
+   */
+
+  angular.module('ml.highcharts')
+    .controller('EditChartConfigCtrl', ['$modalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'MLSearchFactory', function($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, searchFactory) {
+      $scope.facetSortOptions = {};
+      $scope.xSortOptions = {
+        accept: function(sourceItemHandleScope, destSortableScope) {
+          return destSortableScope.modelValue && destSortableScope.modelValue.length < 1;
+        }
+      };
+      $scope.chartFacetOptions = Object.keys(facets);
+      var facetName = $scope.chartFacetOptions[0];
+      if (!highchartConfig) {
+        $scope.chartFacetOptions.splice(0, 1);
+      } else {
+        $scope.chartFacetOptions.push('$frequency');
+        $scope.chartFacetOptions = _.without($scope.chartFacetOptions,
+          highchartConfig.seriesNameMLConstraint,
+          highchartConfig.dataPointNameMLConstraint,
+          highchartConfig.xAxisMLConstraint,
+          highchartConfig.xAxisCategoriesMLConstraint,
+          highchartConfig.yAxisMLConstraint,
+          highchartConfig.zAxisMLConstraint);
+      }
+      $scope.aggregateTypes = HighchartsHelper.aggregateTypes();
+      $scope.facets = facets;
+      $scope.highchartConfig = highchartConfig || {
+        options: {
+          //This is the Main Highcharts chart config. Any Highchart options are valid here.
+          //will be overriden by values specified below.
+          chart: {
+            type: 'bar'
+          },
+          tooltip: {
+            style: {
+              padding: 10,
+              fontWeight: 'bold'
+            }
+          }
+        },
+        title: {
+          text: 'Title'
+        },
+        xAxis: {
+          title: {
+            text: facetName
+          }
+        },
+        seriesNameMLConstraint: null,
+        dataPointNameMLConstraint: null,
+        xAxisMLConstraint: facetName,
+        xAxisMLConstraintAggregate: null,
+        xAxisCategoriesMLConstraint: null,
+        xAxisCategoriesMLConstraintAggregate: null,
+        yAxis: {
+          title: {
+            text: null
+          }
+        },
+        yAxisMLConstraint: '$frequency',
+        yAxisMLConstraintAggregate: null,
+        zAxis: {
+          title: {
+            text: null
+          }
+        },
+        zAxisMLConstraint: null,
+        zAxisMLConstraintAggregate: null,
+        size: {
+          height: 250
+        },
+        resultLimit: 15
+      };
+
+      if (!$scope.highchartConfig.xAxis) {
+        $scope.highchartConfig.xAxis = {
+          title: {
+            text: null
+          }
+        };
+      }
+      if (!$scope.highchartConfig.yAxis) {
+        $scope.highchartConfig.yAxis = {
+          title: {
+            text: null
+          }
+        };
+      }
+
+      $scope.dataPointNameMLConstraint = _.without([$scope.highchartConfig.dataPointNameMLConstraint], null, undefined);
+      $scope.seriesNameMLConstraint = _.without([$scope.highchartConfig.seriesNameMLConstraint], null, undefined);
+      $scope.xAxisMLConstraint = _.without([$scope.highchartConfig.xAxisMLConstraint], null, undefined);
+      $scope.xAxisCategoriesMLConstraint = _.without([$scope.highchartConfig.xAxisCategoriesMLConstraint], null, undefined);
+      $scope.yAxisMLConstraint = _.without([$scope.highchartConfig.yAxisMLConstraint], null, undefined);
+      $scope.zAxisMLConstraint = _.without([$scope.highchartConfig.zAxisMLConstraint], null, undefined);
+
+      var reloadSeriesData = function() {
+        $scope.previewHighChart = HighchartsHelper.chartFromConfig($scope.highchartConfig);
+      };
+
+      $scope.chartTypes = HighchartsHelper.chartTypes();
+      reloadSeriesData();
+
+      $scope.$watch(function() {
+        return $scope.highchartConfig.options.chart.type + $scope.highchartConfig.xAxis.title.text + $scope.highchartConfig.yAxis.title.text + $scope.highchartConfig.title.text + $scope.highchartConfig.resultLimit;
+      }, function() {
+        reloadSeriesData();
+      });
+
+      $scope.$watch(function() {
+        return $scope.xAxisMLConstraint.length + '' + $scope.yAxisMLConstraint.length +
+          '' + $scope.zAxisMLConstraint.length + '' + $scope.xAxisCategoriesMLConstraint.length +
+          '' + $scope.seriesNameMLConstraint.length + '' + $scope.dataPointNameMLConstraint.length +
+          '' + $scope.highchartConfig.xAxisMLConstraintAggregate + '' + $scope.highchartConfig.yAxisMLConstraintAggregate +
+          '' + $scope.highchartConfig.zAxisMLConstraintAggregate;
+      }, function() {
+        $scope.highchartConfig.seriesNameMLConstraint = $scope.seriesNameMLConstraint[0];
+        $scope.highchartConfig.dataPointNameMLConstraint = $scope.dataPointNameMLConstraint[0];
+        $scope.highchartConfig.xAxisMLConstraint = $scope.xAxisMLConstraint[0];
+        $scope.highchartConfig.yAxisMLConstraint = $scope.yAxisMLConstraint[0];
+        $scope.highchartConfig.zAxisMLConstraint = $scope.zAxisMLConstraint[0];
+        $scope.highchartConfig.xAxisCategoriesMLConstraint = $scope.xAxisCategoriesMLConstraint[0];
+        reloadSeriesData();
+      });
+
+      $scope.save = function() {
+        $modalInstance.close($scope.highchartConfig);
+      };
+    }])
+
+  /**
+   * @ngdoc dialog
+   * @name EditChartConfigDialog
+   * @kind function
+   * @description A UI Bootstrap component that provides a modal dialog for
+   * adding/editing a highcart config to the application.
+   */
+  .factory('EditChartConfigDialog', [
+    '$modal',
+    function($modal) {
+      return function(facets, highchartConfig) {
+        return $modal.open({
+          templateUrl: '/ml-highcharts/templates/ml-highchart-config-modal.html',
+          controller: 'EditChartConfigCtrl',
+          size: 'lg',
+          resolve: {
+            facets: function() {
+              return facets;
+            },
+            highchartConfig: function() {
+              return highchartConfig;
+            }
+          }
+        }).result;
+      };
+    }
+  ]);
+}());
+
+(function() {
   'use strict';
 
   angular.module('ml.highcharts')
     .factory('HighchartsHelper', ['$q', 'MLQueryBuilder', 'MLRest', 'MLSearchFactory', function($q, MLQueryBuilder, MLRest, MLSearchFactory) {
       var highchartsHelper = {};
       highchartsHelper.seriesData = function(data, chartType, categories) {
-        var seriesData = [];
-        if (categories.length) {
-          var mappedXValues = {};
-          angular.forEach(data, function(dp) {
-            if (!mappedXValues[dp.x]) {
-              mappedXValues[dp.x] = [];
+        var seriesData = [{
+          name: null,
+          data: []
+        }];
+        angular.forEach(data, function(dp) {
+          var series;
+          if (dp.seriesName) {
+            series = _.filter(seriesData, function(s) {
+              return s.name === dp.seriesName;
+            })[0];
+            if (!series) {
+              series = {
+                name: dp.seriesName,
+                data: []
+              };
+              seriesData.push(series);
             }
-            var dpCategoryIndex = categories.indexOf(dp.xCategory);
-            mappedXValues[dp.x][dpCategoryIndex] = [
-              dp.xCategory,
-              dp.y,
-              dp.z
-            ];
-          });
-          angular.forEach(mappedXValues, function(xVal, xValKey) {
-            angular.forEach(categories, function(cat, index) {
-              if (!xVal[index]) {
-                xVal[index] = [
-                  cat,
-                  0,
-                  0
-                ];
+          } else {
+            series = seriesData[0];
+          }
+          if (categories.length) {
+            angular.forEach(categories, function(cat, catIndex) {
+              if (cat === dp.xCategory) {
+                series = _.filter(seriesData, function(value) {
+                  var seriesMatches = true;
+                  if (dp.seriesName) {
+                    seriesMatches = value.name === dp.seriesName;
+                  }
+                  return !value.data[catIndex] && seriesMatches;
+                })[0];
+                if (!series) {
+                  series = {
+                    name: dp.seriesName,
+                    data: []
+                  };
+                  seriesData.push(series);
+                }
+                series.data[catIndex] = dp;
               }
             });
-            seriesData.push({
-              'type': chartType,
-              'name': xValKey,
-              'data': xVal
+          } else {
+            series.data.push(dp);
+          }
+        });
+        if (categories.length) {
+          angular.forEach(seriesData, function(series) {
+            angular.forEach(categories, function(cat, catIndex) {
+              if (!series.data[catIndex]) {
+                series.data[catIndex] = {
+                  name: null,
+                  x: 0,
+                  y: 0,
+                  z: 0
+                };
+              }
             });
-          });
-        } else if (chartType === 'pie') {
-          seriesData = [{
-            type: chartType,
-            data: data
-          }];
-        } else if (chartType === 'bubble') {
-          seriesData = _.map(data, function(dp) {
-            return {
-              type: chartType,
-              name: dp.name,
-              data: [{
-                x: dp.x,
-                y: dp.y,
-                z: dp.z
-              }]
-            };
-          });
-        } else {
-          seriesData = _.map(data, function(dp) {
-            return {
-              type: chartType,
-              name: dp.x,
-              data: [dp.y, dp.z]
-            };
           });
         }
         return seriesData;
       };
 
       highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, callback) {
+        var d = $q.defer();
         var chartType = highchartConfig.options.chart.type;
         var chart = angular.copy(highchartConfig);
         if (!mlSearch) {
           mlSearch = MLSearchFactory.newContext();
         }
-        mlSearch.getStoredOptions('all').then(function(data) {
-          if (data.options && data.options.constraint) {
-            var availableConstraints = _.filter(data.options.constraint, function(con) {
-              var value = con.range || con.collection;
-              return (value && value.facet);
-            });
-            highchartsHelper.getChartData(mlSearch, availableConstraints, highchartConfig, highchartConfig.resultLimit).then(function(values) {
-              chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories);
-              if (values.categories && values.categories.length) {
-                chart.xAxis.categories = values.categories;
-              }
-            });
-          }
-        });
         if (callback) {
           chart.options.plotOptions = {
             series: {
@@ -98,7 +336,7 @@
                 events: {
                   click: function() {
                     var value = this.name || this.series.name;
-                    if (value.data.length === 1) {
+                    if (value.data && value.data.length === 1) {
                       callback({
                         facet: value.data[0].__key,
                         value: value
@@ -115,7 +353,22 @@
             }
           };
         }
-        return chart;
+        mlSearch.getStoredOptions('all').then(function(data) {
+          if (data.options && data.options.constraint) {
+            var availableConstraints = _.filter(data.options.constraint, function(con) {
+              var value = con.range || con.collection;
+              return value;
+            });
+            highchartsHelper.getChartData(mlSearch, availableConstraints, highchartConfig, highchartConfig.resultLimit).then(function(values) {
+              chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories);
+              if (values.categories && values.categories.length) {
+                chart.xAxis.categories = values.categories;
+              }
+              d.resolve(chart);
+            });
+          }
+        });
+        return d.promise;
       };
 
       function getDataConfig(highchartConfig, filteredFacetNames, filteredValueNames) {
@@ -123,8 +376,37 @@
           xCategoryAxis: highchartConfig.xAxisCategoriesMLConstraint,
           xAxis: highchartConfig.xAxisMLConstraint,
           yAxis: highchartConfig.yAxisMLConstraint,
-          zAxis: highchartConfig.zAxisMLConstraint
+          zAxis: highchartConfig.zAxisMLConstraint,
+          seriesName: highchartConfig.seriesNameMLConstraint,
+          dataPointName: highchartConfig.dataPointNameMLConstraint,
+          xCategoryAxisAggregate: highchartConfig.xAxisCategoriesMLConstraintAggregate,
+          xAxisAggregate: highchartConfig.xAxisMLConstraintAggregate,
+          yAxisAggregate: highchartConfig.yAxisMLConstraintAggregate,
+          zAxisAggregate: highchartConfig.zAxisMLConstraintAggregate
         };
+
+        dataConfig.aggregates = {};
+
+        angular.forEach(dataConfig, function(constraintName, key) {
+          if (constraintName && dataConfig[key + 'Aggregate']) {
+            if (!dataConfig.aggregates[constraintName]) {
+              dataConfig.aggregates[constraintName] = [];
+            }
+            dataConfig.aggregates[constraintName].push({
+              type: dataConfig[key + 'Aggregate'],
+              axis: key.substring(0, key.indexOf('Axis'))
+            });
+          }
+        });
+
+        var aggregateIndexes = _.map(dataConfig.aggregates, function(value, constraintName) {
+          return constraintName;
+        });
+
+        filteredValueNames = _.filter(filteredValueNames, function(name) {
+          return aggregateIndexes.indexOf(name) < 0;
+        });
+
 
         if (highchartConfig.xAxisCategoriesMLConstraint === '$frequency') {
           dataConfig.frequency = 'xCategory';
@@ -140,14 +422,18 @@
           xCategoryAxisIndex: filteredFacetNames.indexOf(dataConfig.xCategoryAxis),
           xAxisIndex: filteredFacetNames.indexOf(dataConfig.xAxis),
           yAxisIndex: filteredFacetNames.indexOf(dataConfig.yAxis),
-          zAxisIndex: filteredFacetNames.indexOf(dataConfig.zAxis)
+          zAxisIndex: filteredFacetNames.indexOf(dataConfig.zAxis),
+          seriesNameIndex: filteredFacetNames.indexOf(dataConfig.seriesName),
+          dataPointNameIndex: filteredFacetNames.indexOf(dataConfig.dataPointName)
         };
 
         dataConfig.values = {
           xCategoryAxisIndex: filteredValueNames.indexOf(dataConfig.xCategoryAxis),
           xAxisIndex: filteredValueNames.indexOf(dataConfig.xAxis),
           yAxisIndex: filteredValueNames.indexOf(dataConfig.yAxis),
-          zAxisIndex: filteredValueNames.indexOf(dataConfig.zAxis)
+          zAxisIndex: filteredValueNames.indexOf(dataConfig.zAxis),
+          seriesNameIndex: filteredValueNames.indexOf(dataConfig.seriesName),
+          dataPointNameIndex: filteredValueNames.indexOf(dataConfig.dataPointName)
         };
 
         return dataConfig;
@@ -177,8 +463,12 @@
           'range': _.without(filteredConstraintRanges, null, undefined),
           'values-option': ['frequency-order', 'limit=' + ((limit) ? limit : '20')]
         }];
-        var query = (mlSearch) ? angular.copy(mlSearch.getQuery().query) : { queries: []};
-        query.queries.unshift.apply(query.queries, additionalQuery);
+        var query = (mlSearch) ? angular.copy(mlSearch.getQuery().query) : {
+          queries: []
+        };
+        if (additionalQuery && additionalQuery.length) {
+          query.queries.unshift.apply(query.queries, additionalQuery);
+        }
         var constraintOptions = {
           'search': {
             'options': {
@@ -204,7 +494,9 @@
               'type': arr[0].type,
               '_value': facetVal.value,
               'frequecy': facetVal.frequency,
-              'query': { qtext: '"' + arr[0].name + '":"' + facetVal.name + '"' }
+              'query': {
+                qtext: '"' + arr[0].name + '":"' + facetVal.name + '"'
+              }
             }];
           });
         } else {
@@ -217,7 +509,7 @@
                   'type': arr[0].type,
                   '_value': arr[0].facetValues[j].value,
                   'frequecy': arr[0].facetValues[j].frequency,
-                  'query': { qtext: '"' + arr[0].name + '":"' + arr[0].facetValues[j].name + '"' }
+                  'query': constraintQuery(arr[0].name, arr[0].facetValues[j].name)
                 },
                 allCasesOfRest[i]
               ]));
@@ -227,8 +519,18 @@
         }
       }
 
+      function constraintQuery(name, value) {
+        return {
+          qtext: '"' + name + '":"' + value + '"'
+        };
+      }
+
       highchartsHelper.getChartData = function(mlSearch, constraints, highchartConfig, limit) {
-        var facetNames = _.without([highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint, highchartConfig.yAxisMLConstraint, highchartConfig.zAxisMLConstraint], null, undefined);
+        var facetNames = _.without(
+          [highchartConfig.seriesNameMLConstraint, highchartConfig.dataPointNameMLConstraint,
+            highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint,
+            highchartConfig.yAxisMLConstraint, highchartConfig.zAxisMLConstraint
+          ], null, undefined);
 
         var valueIndexes = [];
         var facetData = [];
@@ -241,14 +543,14 @@
           facetsPromise = $q.when(facets);
         } else {
           facetsPromise = MLRest.search({
-            options: mlSearch.options.queryOptions
-          })
-          .then(function(response) {
-            angular.forEach(response.data.facets, function(val, key) {
-              val.name = key;
+              options: mlSearch.options.queryOptions
+            })
+            .then(function(response) {
+              angular.forEach(response.data.facets, function(val, key) {
+                val.name = key;
+              });
+              return response.data.facets;
             });
-            return response.data.facets;
-          });
         }
         return facetsPromise.then(function(facets) {
           if (constraints && constraints.length) {
@@ -265,83 +567,124 @@
               }
             });
 
-            var valueConstraintNames = _.map(constraintsFromValues, function(c) { return c.name; });
-            var facetConstraintNames = _.map(constraintsFromFacets, function(c) { return c.name; });
+            var valueConstraintNames = _.map(constraintsFromValues, function(c) {
+              return c.name;
+            });
+            var facetConstraintNames = _.map(constraintsFromFacets, function(c) {
+              return c.name;
+            });
             var dataConfig = getDataConfig(highchartConfig, facetConstraintNames, valueConstraintNames);
 
             var getValue = function(item) {
-              return (item) ? item._value : null;
+              return (item) ? item._value : undefined;
             };
 
             var facetCombinations;
             if (constraintsFromFacets.length > 0) {
               facetCombinations = allPossibleCases(constraintsFromFacets);
             } else {
-              facetCombinations = [[{
-                'query': {
-                  'and-query': {
-                    'queries': []
-                  }
-                }
-              }]];
+              facetCombinations = [
+                []
+              ];
             }
 
             if (constraintsFromValues.length > 0) {
               var promises = [];
+              var valueFields = _.filter(constraintsFromValues, function(c) {
+                return !dataConfig.aggregates[c.name];
+              });
+              var valueAggregates = _.filter(constraintsFromValues, function(c) {
+                return dataConfig.aggregates[c.name];
+              });
               angular.forEach(facetCombinations, function(facetCombination) {
                 var combinationQuery = _.map(facetCombination, function(f) {
                   return f.query;
                 });
-                var constraintOptions = getSearchConstraintOptions(mlSearch, constraints, constraintsFromValues, limit, combinationQuery);
-                promises.push(MLRest.values('cooccurrence', {
-                  format: 'json'
-                }, constraintOptions).then(
-                  function(response) {
-                    if (response.data['values-response']) {
-                      if (constraintsFromValues.length > 1) {
-                        angular.forEach(response.data['values-response'].tuple, function(tup) {
-                          var vals = tup['distinct-value'];
-                          var dataPoint = {
-                            xCategory: getValue(_.without([vals[dataConfig.values.xCategoryAxisIndex], facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)[0]),
-                            x: getValue(_.without([vals[dataConfig.values.xAxisIndex], facetCombination[dataConfig.facets.xAxisIndex]], null, undefined)[0]),
-                            y: getValue(_.without([vals[dataConfig.values.yAxisIndex], facetCombination[dataConfig.facets.yAxisIndex]], null, undefined)[0]),
-                            z: getValue(_.without([vals[dataConfig.values.zAxisIndex], facetCombination[dataConfig.facets.zAxisIndex]], null, undefined)[0])
-                          };
-                          if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
-                            valueIndexes.push(dataPoint.xCategory);
-                          }
-                          dataPoint.name = _.without([dataPoint.xCategory, dataPoint.x, dataPoint.y, dataPoint.z], null, undefined).join();
-                          dataPoint[dataConfig.frequency] = tup.frequency;
-                          dataPoint.frequency = tup.frequency;
-                          facetData.push(dataPoint);
-                        });
-                      } else {
-                        angular.forEach(response.data['values-response']['distinct-value'], function(valueObj) {
-                          var dataPoint = {
-                            xCategory: getValue(_.without([(dataConfig.values.xCategoryAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)[0]),
-                            x: getValue(_.without([(dataConfig.values.xAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.xAxisIndex]], null, undefined)[0]),
-                            y: getValue(_.without([(dataConfig.values.yAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.yAxisIndex]], null, undefined)[0]),
-                            z: getValue(_.without([(dataConfig.values.zAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.zAxisIndex]], null, undefined)[0])
-                          };
-                          if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
-                            valueIndexes.push(dataPoint.xCategory);
-                          }
-                          dataPoint.name = _.without([dataPoint.xCategory, dataPoint.x, dataPoint.y, dataPoint.z], null, undefined).join();
-                          dataPoint[dataConfig.frequency] = valueObj.frequency;
-                          dataPoint.frequency = valueObj.frequency;
-                          facetData.push(dataPoint);
-                        });
+                if (valueFields.length > 0) {
+                  promises.push(
+                    highchartsHelper.constraintValueCall(
+                      mlSearch, constraints, valueFields,
+                      limit, combinationQuery)
+                    .then(function(results) {
+                      if (results['values-response']) {
+                        if (valueFields.length > 1) {
+                          angular.forEach(results['values-response'].tuple, function(tup) {
+                            var vals = tup['distinct-value'];
+                            var dataPoint = {
+                              seriesName: getValue(_.without([vals[dataConfig.values.seriesNameIndex], facetCombination[dataConfig.facets.seriesNameIndex]], null, undefined)[0]),
+                              name: getValue(_.without([vals[dataConfig.values.dataPointNameIndex], facetCombination[dataConfig.facets.dataPointNameIndex]], null, undefined)[0]),
+                              xCategory: getValue(_.without([vals[dataConfig.values.xCategoryAxisIndex], facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)[0]),
+                              x: getValue(_.without([vals[dataConfig.values.xAxisIndex], facetCombination[dataConfig.facets.xAxisIndex]], null, undefined)[0]),
+                              y: getValue(_.without([vals[dataConfig.values.yAxisIndex], facetCombination[dataConfig.facets.yAxisIndex]], null, undefined)[0]),
+                              z: getValue(_.without([vals[dataConfig.values.zAxisIndex], facetCombination[dataConfig.facets.zAxisIndex]], null, undefined)[0])
+                            };
+                            if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
+                              valueIndexes.push(dataPoint.xCategory);
+                            }
+                            if (!dataPoint.name) {
+                              dataPoint.name = _.without([dataPoint.seriesName, dataPoint.xCategory, dataPoint.x, dataPoint.y, dataPoint.z], null, undefined).join();
+                            }
+                            dataPoint[dataConfig.frequency] = tup.frequency;
+                            dataPoint.frequency = tup.frequency;
+                            facetData.push(dataPoint);
+                          });
+                        } else {
+                          angular.forEach(results['values-response']['distinct-value'], function(valueObj) {
+                            var dataPoint = {
+                              seriesName: getValue(_.without([(dataConfig.values.seriesNameIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.seriesNameIndex]], null, undefined)[0]),
+                              name: getValue(_.without([(dataConfig.values.dataPointNameIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.dataPointNameIndex]], null, undefined)[0]),
+                              xCategory: getValue(_.without([(dataConfig.values.xCategoryAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)[0]),
+                              x: getValue(_.without([(dataConfig.values.xAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.xAxisIndex]], null, undefined)[0]),
+                              y: getValue(_.without([(dataConfig.values.yAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.yAxisIndex]], null, undefined)[0]),
+                              z: getValue(_.without([(dataConfig.values.zAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.zAxisIndex]], null, undefined)[0])
+                            };
+                            if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
+                              valueIndexes.push(dataPoint.xCategory);
+                            }
+                            if (!dataPoint.name) {
+                              dataPoint.name = _.without([dataPoint.xCategory, dataPoint.x, dataPoint.y, dataPoint.z], null, undefined).join();
+                            }
+                            dataPoint[dataConfig.frequency] = valueObj.frequency;
+                            dataPoint.frequency = valueObj.frequency;
+                            facetData.push(dataPoint);
+                          });
+                        }
                       }
-                    }
-                  }));
+                    })
+                  );
+                }
               });
               return $q.all(promises).then(function() {
-                return {
-                  data: facetData.sort(function(a, b) {
-                    return b.frequency - a.frequency;
-                  }),
-                  categories: valueIndexes
-                };
+                var aggregatePromises = [];
+                angular.forEach(valueAggregates, function(aggregatedConstraint) {
+                  angular.forEach(dataConfig.aggregates[aggregatedConstraint.name], function(aggregateInfo) {
+                    angular.forEach(facetData, function(dataPoint) {
+                      var aggQueries = _.without(_.map(dataPoint, function(dpValue, key) {
+                        if (dpValue && dataConfig[key + 'Axis'] && dataConfig[key + 'Axis'] !== '$frequency') {
+                          return constraintQuery(dataConfig[key + 'Axis'], dpValue);
+                        } else {
+                          return null;
+                        }
+                      }), null, undefined);
+                      aggregatePromises.push(
+                        highchartsHelper.constraintValueCall(
+                          mlSearch, constraints, [aggregatedConstraint],
+                          limit, aggQueries, aggregateInfo.type)
+                        .then(function(results) {
+                          dataPoint[aggregateInfo.axis] = Number(results['values-response']['aggregate-result'][0]._value);
+                        })
+                      );
+                    });
+                  });
+                });
+                return $q.all(aggregatePromises).then(function() {
+                  return {
+                    data: facetData.sort(function(a, b) {
+                      return b.frequency - a.frequency;
+                    }),
+                    categories: valueIndexes
+                  };
+                });
               });
             } else if (constraintsFromFacets.length === 1) {
               //handle by getting facets
@@ -369,6 +712,18 @@
         });
       };
 
+      highchartsHelper.constraintValueCall = function(mlSearch, constraints, constraintsFromValues, limit, combinationQuery, aggregate) {
+        var constraintOptions = getSearchConstraintOptions(mlSearch, constraints, constraintsFromValues, limit, combinationQuery);
+        return MLRest.values('cooccurrence', {
+            format: 'json',
+            aggregate: aggregate,
+            view: aggregate ? 'aggregate' : 'all'
+          }, constraintOptions)
+          .then(function(response) {
+            return response.data;
+          });
+      };
+
       highchartsHelper.chartTypes = function() {
         return [
           'line',
@@ -383,214 +738,25 @@
         ];
       };
 
+      highchartsHelper.aggregateTypes = function() {
+        return [
+          null,
+          'sum',
+          'avg',
+          'min',
+          'max',
+          'median',
+          'count',
+          'stddev',
+          'stddev-population',
+          'correlation',
+          'covariance',
+          'covariance-population',
+          'variance',
+          'variance-population'
+        ];
+      };
+
       return highchartsHelper;
-    }]);
-})();
-
-(function() {
-  'use strict';
-  /**
-   * @ngdoc controller
-   * @kind constructor
-   * @name EditChartConfigCtrl
-   * @description
-   * Controller for {@link editChartConfigDialog}. The controller is injected by the
-   * $modal service. Provides a user interface for configuring a highchart.
-   * See <a href="http://angular-ui.github.io/bootstrap/"
-   * target="_blank">ui.bootstrap.modal</a> for more information.
-   *
-   * @param {ui.bootstrap.modal.$modalInstance} $modalInstance (injected)
-   * @param {angular.Scope} $scope (injected)
-   * @param {ml.highcharts.HighchartsHelper} HighchartsHelper (injected)
-   * @param {object} facets object
-   * @param {object} highchartConfig object
-   * @param {ml.search.MLSearchFactory} MLSearchFactory (injected)
-   *
-   */
-
-  angular.module('ml.highcharts')
-  .controller('EditChartConfigCtrl', ['$modalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'MLSearchFactory', function ($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, searchFactory) {
-      $scope.facetSortOptions = {};
-      $scope.xSortOptions = {
-        accept: function (sourceItemHandleScope, destSortableScope) {
-          return destSortableScope.modelValue.length < 1;
-        }
-      };
-      $scope.chartFacetOptions = Object.keys(facets);
-      var facetName = $scope.chartFacetOptions[0];
-      $scope.chartFacetOptions.splice(0,1);
-      $scope.facets = facets;
-      $scope.highchartConfig = highchartConfig || {
-        options: {
-            //This is the Main Highcharts chart config. Any Highchart options are valid here.
-            //will be overriden by values specified below.
-            chart: {
-                type: 'bar'
-            },
-            tooltip: {
-                style: {
-                    padding: 10,
-                    fontWeight: 'bold'
-                }
-            }
-        },
-        title: {
-          text: 'Title'
-        },
-        xAxis: {
-          title: {text: facetName}
-        },
-        xAxisMLConstraint: facetName,
-        xAxisCategoriesMLConstraint: null,
-        yAxis: {
-          title: {text: null}
-        },
-        yAxisMLConstraint: '$frequency',
-        zAxis: {
-          title: {text: null}
-        },
-        zAxisMLConstraint: null,
-        size: {
-          height: 250
-        },
-        resultLimit: 15
-      };
-
-      if (!$scope.highchartConfig.xAxis) {
-        $scope.highchartConfig.xAxis = {
-          title: {text: null}
-        };
-      }
-      if (!$scope.highchartConfig.yAxis) {
-        $scope.highchartConfig.yAxis = {
-          title: {text: null}
-        };
-      }
-
-      $scope.xAxisMLConstraint = _.without([$scope.highchartConfig.xAxisMLConstraint], null, undefined);
-      $scope.xAxisCategoriesMLConstraint = _.without([$scope.highchartConfig.xAxisCategoriesMLConstraint], null, undefined);
-      $scope.yAxisMLConstraint = _.without([$scope.highchartConfig.yAxisMLConstraint], null, undefined);
-      $scope.zAxisMLConstraint = _.without([$scope.highchartConfig.zAxisMLConstraint], null, undefined);
-
-      var reloadSeriesData = function() {
-        $scope.previewHighChart = HighchartsHelper.chartFromConfig($scope.highchartConfig);
-      };
-
-      $scope.chartTypes = HighchartsHelper.chartTypes();
-      reloadSeriesData();
-
-      $scope.$watch(function() { 
-        return $scope.highchartConfig.options.chart.type + $scope.highchartConfig.xAxis.title.text + $scope.highchartConfig.yAxis.title.text + $scope.highchartConfig.title.text + $scope.highchartConfig.resultLimit;
-      }, function() {
-        reloadSeriesData();
-      });
-      
-      $scope.$watch(function() { 
-        return $scope.xAxisMLConstraint.length + '' + $scope.yAxisMLConstraint.length + '' + $scope.xAxisCategoriesMLConstraint.length;
-      }, function() {
-        $scope.highchartConfig.xAxisMLConstraint = $scope.xAxisMLConstraint[0];
-        $scope.highchartConfig.yAxisMLConstraint = $scope.yAxisMLConstraint[0];
-        $scope.highchartConfig.zAxisMLConstraint = $scope.zAxisMLConstraint[0];
-        $scope.highchartConfig.xAxisCategoriesMLConstraint = $scope.xAxisCategoriesMLConstraint[0];
-        reloadSeriesData();
-      });
-      
-      $scope.save = function () {
-        $modalInstance.close($scope.highchartConfig);
-      };
-    }])
-
-  /**
-   * @ngdoc dialog
-   * @name EditChartConfigDialog
-   * @kind function
-   * @description A UI Bootstrap component that provides a modal dialog for
-   * adding/editing a highcart config to the application.
-   */
-  .factory('EditChartConfigDialog', [
-    '$modal',
-    function ($modal) {
-      return function (facets, highchartConfig) {
-        return $modal.open({
-          templateUrl : '/ml-highcharts/templates/ml-highchart-config-modal.html',
-          controller : 'EditChartConfigCtrl',
-          size : 'lg',
-          resolve: {
-            facets: function() {
-              return facets;
-            },
-            highchartConfig: function() {
-              return highchartConfig;
-            }
-          }
-        }).result;
-      };
-    }
-  ]);
-}());
-(function() {
-
-  'use strict';
-
-  /**
-   * angular element directive; a highchart based off of MarkLogic values result.
-   *
-   * attributes:
-   *
-   * - `highchart-config`: a reference to the model with chart config information
-   * - `ml-search`: optional. An mlSearch context to filter query.
-   * - `callback`: optional. A function reference to callback when a chart item is selected
-   *
-   * Example:
-   *
-   * ```
-   * <ml-highchart highchart-config="model.highChartConfig" ml-search="mlSearch"></ml-highchart>```
-   *
-   * @namespace ml-highchart
-   */
-  angular.module('ml.highcharts')
-    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
-
-      function link(scope, element, attrs) {
-        if (!scope.mlSearch) {
-          scope.mlSearch = searchFactory.newContext();
-        }
-        var loadData = function() {
-          if (scope.highchartConfig) {
-            scope.populatedConfig = HighchartsHelper.chartFromConfig(scope.highchartConfig, scope.mlSearch, scope.mlSearchController, scope.callback);
-          }
-        };
-        var reloadChartsDecorator = function (fn) {
-          return function () {
-            var results = fn.apply(this, arguments);
-            if (results && angular.isFunction(results.then)) {
-              // Then this is promise
-              return results.then(function(data){
-                loadData();
-                return data;
-              });
-            } else {
-              loadData();
-              return results;
-            }
-          };
-        };
-
-        var origSearchFun = scope.mlSearch.search;
-        scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
-        loadData();
-
-      }
-
-      return {
-        restrict: 'E',
-        templateUrl: '/ml-highcharts/templates/ml-highchart.html',
-        scope: {
-          'mlSearch': '=',
-          'highchartConfig': '=',
-          'callback': '&'
-        },
-        link: link
-      };
     }]);
 })();

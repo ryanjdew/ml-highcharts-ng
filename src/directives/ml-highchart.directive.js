@@ -27,15 +27,19 @@
         }
         var loadData = function() {
           if (scope.highchartConfig) {
-            scope.populatedConfig = HighchartsHelper.chartFromConfig(scope.highchartConfig, scope.mlSearch, scope.mlSearchController, scope.callback);
+            HighchartsHelper.chartFromConfig(
+              scope.highchartConfig, scope.mlSearch,
+              scope.callback).then(function(populatedConfig) {
+              scope.populatedConfig = populatedConfig;
+            });
           }
         };
-        var reloadChartsDecorator = function (fn) {
-          return function () {
+        var reloadChartsDecorator = function(fn) {
+          return function() {
             var results = fn.apply(this, arguments);
             if (results && angular.isFunction(results.then)) {
               // Then this is promise
-              return results.then(function(data){
+              return results.then(function(data) {
                 loadData();
                 return data;
               });

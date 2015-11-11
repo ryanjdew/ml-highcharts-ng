@@ -18,8 +18,8 @@
       "text": "Ingredients"
     }
   },
-  "xAxisMLConstraint": "Ingredients",
-  "xAxisCategoriesMLConstraint": "Category",
+  "dataPointNameMLConstraint": "Category",
+  "xAxisCategoriesMLConstraint": "Ingredients",
   "yAxis": {
     "title": {
       "text": "$frequency"
