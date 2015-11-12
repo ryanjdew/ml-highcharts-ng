@@ -21,7 +21,9 @@
 
   angular.module('ml.highcharts')
     .controller('EditChartConfigCtrl', ['$modalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'MLSearchFactory', function($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, searchFactory) {
-      $scope.facetSortOptions = {};
+      $scope.facetSortOptions = {
+        clone: true
+      };
       $scope.xSortOptions = {
         accept: function(sourceItemHandleScope, destSortableScope) {
           return destSortableScope.modelValue && destSortableScope.modelValue.length < 1;
@@ -29,18 +31,7 @@
       };
       $scope.chartFacetOptions = Object.keys(facets);
       var facetName = $scope.chartFacetOptions[0];
-      if (!highchartConfig) {
-        $scope.chartFacetOptions.splice(0, 1);
-      } else {
-        $scope.chartFacetOptions.push('$frequency');
-        $scope.chartFacetOptions = _.without($scope.chartFacetOptions,
-          highchartConfig.seriesNameMLConstraint,
-          highchartConfig.dataPointNameMLConstraint,
-          highchartConfig.xAxisMLConstraint,
-          highchartConfig.xAxisCategoriesMLConstraint,
-          highchartConfig.yAxisMLConstraint,
-          highchartConfig.zAxisMLConstraint);
-      }
+      $scope.chartFacetOptions.push('$frequency');
       $scope.aggregateTypes = HighchartsHelper.aggregateTypes();
       $scope.facets = facets;
       $scope.highchartConfig = highchartConfig || {
@@ -114,7 +105,9 @@
       $scope.zAxisMLConstraint = _.without([$scope.highchartConfig.zAxisMLConstraint], null, undefined);
 
       var reloadSeriesData = function() {
-        $scope.previewHighChart = HighchartsHelper.chartFromConfig($scope.highchartConfig);
+        HighchartsHelper.chartFromConfig($scope.highchartConfig).then(function(previewHighChart) {
+          $scope.previewHighChart = previewHighChart;
+        });
       };
 
       $scope.chartTypes = HighchartsHelper.chartTypes();
