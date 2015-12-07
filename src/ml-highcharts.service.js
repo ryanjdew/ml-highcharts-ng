@@ -98,13 +98,9 @@
             }
           };
         }
-        mlSearch.getStoredOptions('all').then(function(data) {
-          if (data.options && data.options.constraint) {
-            var availableConstraints = _.filter(data.options.constraint, function(con) {
-              var value = con.range || con.collection;
-              return value;
-            });
-            highchartsHelper.getChartData(mlSearch, availableConstraints, highchartConfig, highchartConfig.resultLimit).then(function(values) {
+        mlSearch.getStoredOptions(mlSearch.options.queryOptions).then(function(data) {
+          if (data.options && data.options.constraint && data.options.constraint.length) {
+            highchartsHelper.getChartData(mlSearch, data.options.constraint, highchartConfig, highchartConfig.resultLimit).then(function(values) {
               chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories);
               if (values.categories && values.categories.length) {
                 chart.xAxis.categories = values.categories;
@@ -186,7 +182,7 @@
 
       function getConstraintsOnChart(constraints, facetNames) {
         return _.filter(constraints, function(constraint) {
-          return constraint && constraint.name && facetNames.indexOf(constraint.name) > -1 && constraint.range;
+          return constraint && constraint.name && facetNames.indexOf(constraint.name) > -1;
         }).sort(function(a, b) {
           // ensure collections are on top
           var aCollectionFactor = (!a.collection) ? 100 : 1;
@@ -224,7 +220,7 @@
         };
         if (filteredConstraints.length > 1) {
           constraintOptions.search.options.tuples = tuples;
-        } else {
+        } else if (filteredConstraints.length == 1) {
           constraintOptions.search.options.values = tuples;
         }
         return constraintOptions;
@@ -238,7 +234,7 @@
               'facetName': arr[0].name,
               'type': arr[0].type,
               '_value': facetVal.value,
-              'frequecy': facetVal.frequency,
+              'frequency': facetVal.frequency || facetVal.count,
               'query': {
                 qtext: '"' + arr[0].name + '":"' + facetVal.name + '"'
               }
@@ -437,29 +433,50 @@
                   };
                 });
               });
-            } else if (constraintsFromFacets.length === 1) {
+            } else {
+              var facetPromises = [];
               //handle by getting facets
-              angular.forEach(facetCombinations, function(facetCombination) {
+              angular.forEach(facetCombinations, function(facetCombination, facetIndex) {
                 var dataPoint = {
-                  xCategory: getValue(_.without([facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)),
-                  x: getValue(_.without([facetCombination[dataConfig.facets.xAxisIndex]], null, undefined)),
-                  y: getValue(_.without([facetCombination[dataConfig.facets.yAxisIndex]], null, undefined)),
-                  z: getValue(_.without([facetCombination[dataConfig.facets.zAxisIndex]], null, undefined)),
-                  frequency: facetCombination[0].frequency
+                  seriesName: getValue(facetCombination[dataConfig.facets.seriesNameIndex]),
+                  name: getValue(facetCombination[dataConfig.facets.dataPointNameIndex]),
+                  xCategory: getValue(facetCombination[dataConfig.facets.xCategoryAxisIndex]),
+                  x: getValue(facetCombination[dataConfig.facets.xAxisIndex]),
+                  y: getValue(facetCombination[dataConfig.facets.yAxisIndex]),
+                  z: getValue(facetCombination[dataConfig.facets.zAxisIndex])
                 };
-                dataPoint[dataConfig.frequency] = facetCombination[0].frequency;
+                if (constraintsFromFacets.length === 1) {
+                  dataPoint.frequency = facetCombination[0].frequency || facetCombination[0].count;
+                  dataPoint[dataConfig.frequency] = dataPoint.frequency;
+                } else {
+                  var combinationQuery = _.map(facetCombination, function(f) {
+                    return f.query;
+                  });
+                  var queryOptions = getSearchConstraintOptions(mlSearch, constraints, [], limit, combinationQuery);
+                  queryOptions.search.options['return-results'] = false;
+                  queryOptions.search.options['return-facets'] = false;
+                  queryOptions.search.options['return-values'] = false;
+                  queryOptions.search.options['return-metrics'] = true;
+                  facetPromises.push(
+                    MLRest.search({options: mlSearch.options.queryOptions }, queryOptions).then(function(response) {
+                      var frequency = response.data.total;
+                      dataPoint.frequency = frequency;
+                      dataPoint[dataConfig.frequency] = frequency;
+                    })
+                  );
+                }
                 facetData.push(dataPoint);
               });
-            } else {
-              console.log('TODO: mulitple bucket facets without values');
+              return $q.all(facetPromises).then(function() {
+                return {
+                  data: facetData.sort(function(a, b) {
+                    return b.frequency - a.frequency;
+                  }),
+                  categories: valueIndexes
+                };
+              });
             }
           }
-          return {
-            data: facetData.sort(function(a, b) {
-              return b.frequency - a.frequency;
-            }),
-            categories: valueIndexes
-          };
         });
       };
 

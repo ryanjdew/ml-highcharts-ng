@@ -20,15 +20,20 @@
    */
 
   angular.module('ml.highcharts')
-    .controller('EditChartConfigCtrl', ['$modalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'MLSearchFactory', function($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, searchFactory) {
+    .controller('EditChartConfigCtrl', ['$modalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'mlSearch', function($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, mlSearch) {
       $scope.facetSortOptions = {
-        clone: true
+        clone: true,
+        accept: function(sourceItemHandleScope, destSortableScope) {
+          return true;
+        },
+        allowDuplicates: false
       };
       $scope.xSortOptions = {
         accept: function(sourceItemHandleScope, destSortableScope) {
           return destSortableScope.modelValue && destSortableScope.modelValue.length < 1;
         }
       };
+      $scope.mlSearch = mlSearch;
       $scope.chartFacetOptions = Object.keys(facets);
       var facetName = $scope.chartFacetOptions[0];
       $scope.chartFacetOptions.push('$frequency');
@@ -56,9 +61,9 @@
             text: facetName
           }
         },
-        seriesNameMLConstraint: null,
+        seriesNameMLConstraint: facetName,
         dataPointNameMLConstraint: null,
-        xAxisMLConstraint: facetName,
+        xAxisMLConstraint: null,
         xAxisMLConstraintAggregate: null,
         xAxisCategoriesMLConstraint: null,
         xAxisCategoriesMLConstraintAggregate: null,
@@ -105,9 +110,7 @@
       $scope.zAxisMLConstraint = _.without([$scope.highchartConfig.zAxisMLConstraint], null, undefined);
 
       var reloadSeriesData = function() {
-        HighchartsHelper.chartFromConfig($scope.highchartConfig).then(function(previewHighChart) {
-          $scope.previewHighChart = previewHighChart;
-        });
+        $scope.mlSearch.search();
       };
 
       $scope.chartTypes = HighchartsHelper.chartTypes();
@@ -148,9 +151,9 @@
    * adding/editing a highcart config to the application.
    */
   .factory('EditChartConfigDialog', [
-    '$modal',
-    function($modal) {
-      return function(facets, highchartConfig) {
+    '$modal', 'MLSearchFactory',
+    function($modal, searchFactory) {
+      return function(facets, highchartConfig, optionsName) {
         return $modal.open({
           templateUrl: '/ml-highcharts/templates/ml-highchart-config-modal.html',
           controller: 'EditChartConfigCtrl',
@@ -161,6 +164,9 @@
             },
             highchartConfig: function() {
               return highchartConfig;
+            },
+            mlSearch: function() {
+              return searchFactory.newContext({ 'queryOptions': optionsName || 'all'});
             }
           }
         }).result;
