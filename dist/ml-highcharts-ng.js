@@ -86,18 +86,11 @@
               point: {
                 events: {
                   click: function() {
-                    var value = this.name || this.series.name;
-                    if (value.data && value.data.length === 1) {
-                      callback({
-                        facet: value.data[0].__key,
-                        value: value
-                      });
-                    } else {
-                      callback({
-                        facet: this.series.name,
-                        value: value
-                      });
-                    }
+                    var value = this.name || this.seriesName;
+                    callback(angular.extend({
+                      facet: this.facetNames[0],
+                      value: value
+                    }, this));
                   }
                 }
               }
@@ -277,7 +270,7 @@
           [highchartConfig.seriesNameMLConstraint, highchartConfig.dataPointNameMLConstraint,
             highchartConfig.xAxisCategoriesMLConstraint, highchartConfig.xAxisMLConstraint,
             highchartConfig.yAxisMLConstraint, highchartConfig.zAxisMLConstraint
-          ], null, undefined);
+          ], null, undefined, '$frequency');
 
         var valueIndexes = [];
         var facetData = [];
@@ -358,6 +351,7 @@
                           angular.forEach(results['values-response'].tuple, function(tup) {
                             var vals = tup['distinct-value'];
                             var dataPoint = {
+                              facetNames: facetNames,
                               seriesName: getValue(_.without([vals[dataConfig.values.seriesNameIndex], facetCombination[dataConfig.facets.seriesNameIndex]], null, undefined)[0]),
                               name: getValue(_.without([vals[dataConfig.values.dataPointNameIndex], facetCombination[dataConfig.facets.dataPointNameIndex]], null, undefined)[0]),
                               xCategory: getValue(_.without([vals[dataConfig.values.xCategoryAxisIndex], facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)[0]),
@@ -378,6 +372,7 @@
                         } else {
                           angular.forEach(results['values-response']['distinct-value'], function(valueObj) {
                             var dataPoint = {
+                              facetNames: facetNames,
                               seriesName: getValue(_.without([(dataConfig.values.seriesNameIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.seriesNameIndex]], null, undefined)[0]),
                               name: getValue(_.without([(dataConfig.values.dataPointNameIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.dataPointNameIndex]], null, undefined)[0]),
                               xCategory: getValue(_.without([(dataConfig.values.xCategoryAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)[0]),
@@ -444,6 +439,7 @@
               //handle by getting facets
               angular.forEach(facetCombinations, function(facetCombination, facetIndex) {
                 var dataPoint = {
+                  facetNames: facetNames,
                   seriesName: getValue(facetCombination[dataConfig.facets.seriesNameIndex]),
                   name: getValue(facetCombination[dataConfig.facets.dataPointNameIndex]),
                   xCategory: getValue(facetCombination[dataConfig.facets.xCategoryAxisIndex]),
