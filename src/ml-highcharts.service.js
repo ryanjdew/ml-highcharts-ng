@@ -63,7 +63,9 @@
             });
           });
         }
-        return seriesData;
+        return _.filter(seriesData, function(val) {
+          return val.name || (val.data && val.data.length);
+        });
       };
 
       highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, callback) {
@@ -213,7 +215,7 @@
         };
         if (filteredConstraints.length > 1) {
           constraintOptions.search.options.tuples = tuples;
-        } else if (filteredConstraints.length == 1) {
+        } else if (filteredConstraints.length === 1) {
           constraintOptions.search.options.values = tuples;
         }
         return constraintOptions;
