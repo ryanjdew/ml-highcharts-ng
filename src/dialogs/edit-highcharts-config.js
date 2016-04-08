@@ -6,11 +6,11 @@
    * @name EditChartConfigCtrl
    * @description
    * Controller for {@link editChartConfigDialog}. The controller is injected by the
-   * $modal service. Provides a user interface for configuring a highchart.
+   * $uibModal service. Provides a user interface for configuring a highchart.
    * See <a href="http://angular-ui.github.io/bootstrap/"
    * target="_blank">ui.bootstrap.modal</a> for more information.
    *
-   * @param {ui.bootstrap.modal.$modalInstance} $modalInstance (injected)
+   * @param {ui.bootstrap.modal.$uibModalInstance} $uibModalInstance (injected)
    * @param {angular.Scope} $scope (injected)
    * @param {ml.highcharts.HighchartsHelper} HighchartsHelper (injected)
    * @param {object} facets object
@@ -20,7 +20,7 @@
    */
 
   angular.module('ml.highcharts')
-    .controller('EditChartConfigCtrl', ['$modalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'mlSearch', function($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, mlSearch) {
+    .controller('EditChartConfigCtrl', ['$uibModalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'mlSearch', function($uibModalInstance, $scope, HighchartsHelper, facets, highchartConfig, mlSearch) {
       $scope.facetSortOptions = {
         clone: true,
         accept: function(sourceItemHandleScope, destSortableScope) {
@@ -139,7 +139,7 @@
       });
 
       $scope.save = function() {
-        $modalInstance.close($scope.highchartConfig);
+        $uibModalInstance.close($scope.highchartConfig);
       };
     }])
 
@@ -151,10 +151,10 @@
    * adding/editing a highcart config to the application.
    */
   .factory('EditChartConfigDialog', [
-    '$modal', 'MLSearchFactory',
-    function($modal, searchFactory) {
+    '$uibModal', 'MLSearchFactory',
+    function($uibModal, searchFactory) {
       return function(facets, highchartConfig, optionsName) {
-        return $modal.open({
+        return $uibModal.open({
           templateUrl: '/ml-highcharts/templates/ml-highchart-config-modal.html',
           controller: 'EditChartConfigCtrl',
           size: 'lg',

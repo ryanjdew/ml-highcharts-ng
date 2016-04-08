@@ -6,6 +6,254 @@
 }());
 (function() {
   'use strict';
+  /**
+   * @ngdoc controller
+   * @kind constructor
+   * @name EditChartConfigCtrl
+   * @description
+   * Controller for {@link editChartConfigDialog}. The controller is injected by the
+   * $uibModal service. Provides a user interface for configuring a highchart.
+   * See <a href="http://angular-ui.github.io/bootstrap/"
+   * target="_blank">ui.bootstrap.modal</a> for more information.
+   *
+   * @param {ui.bootstrap.modal.$uibModalInstance} $uibModalInstance (injected)
+   * @param {angular.Scope} $scope (injected)
+   * @param {ml.highcharts.HighchartsHelper} HighchartsHelper (injected)
+   * @param {object} facets object
+   * @param {object} highchartConfig object
+   * @param {ml.search.MLSearchFactory} MLSearchFactory (injected)
+   *
+   */
+
+  angular.module('ml.highcharts')
+    .controller('EditChartConfigCtrl', ['$uibModalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'mlSearch', function($uibModalInstance, $scope, HighchartsHelper, facets, highchartConfig, mlSearch) {
+      $scope.facetSortOptions = {
+        clone: true,
+        accept: function(sourceItemHandleScope, destSortableScope) {
+          return true;
+        },
+        allowDuplicates: false
+      };
+      $scope.xSortOptions = {
+        accept: function(sourceItemHandleScope, destSortableScope) {
+          return destSortableScope.modelValue && destSortableScope.modelValue.length < 1;
+        }
+      };
+      $scope.mlSearch = mlSearch;
+      $scope.chartFacetOptions = Object.keys(facets);
+      var facetName = $scope.chartFacetOptions[0];
+      $scope.chartFacetOptions.push('$frequency');
+      $scope.aggregateTypes = HighchartsHelper.aggregateTypes();
+      $scope.facets = facets;
+      $scope.highchartConfig = highchartConfig || {
+        options: {
+          //This is the Main Highcharts chart config. Any Highchart options are valid here.
+          //will be overriden by values specified below.
+          chart: {
+            type: 'bar'
+          },
+          tooltip: {
+            style: {
+              padding: 10,
+              fontWeight: 'bold'
+            }
+          }
+        },
+        title: {
+          text: 'Title'
+        },
+        xAxis: {
+          title: {
+            text: facetName
+          }
+        },
+        seriesNameMLConstraint: facetName,
+        dataPointNameMLConstraint: null,
+        xAxisMLConstraint: null,
+        xAxisMLConstraintAggregate: null,
+        xAxisCategoriesMLConstraint: null,
+        xAxisCategoriesMLConstraintAggregate: null,
+        yAxis: {
+          title: {
+            text: null
+          }
+        },
+        yAxisMLConstraint: '$frequency',
+        yAxisMLConstraintAggregate: null,
+        zAxis: {
+          title: {
+            text: null
+          }
+        },
+        zAxisMLConstraint: null,
+        zAxisMLConstraintAggregate: null,
+        size: {
+          height: 250
+        },
+        resultLimit: 15
+      };
+
+      if (!$scope.highchartConfig.xAxis) {
+        $scope.highchartConfig.xAxis = {
+          title: {
+            text: null
+          }
+        };
+      }
+      if (!$scope.highchartConfig.yAxis) {
+        $scope.highchartConfig.yAxis = {
+          title: {
+            text: null
+          }
+        };
+      }
+
+      $scope.dataPointNameMLConstraint = _.without([$scope.highchartConfig.dataPointNameMLConstraint], null, undefined);
+      $scope.seriesNameMLConstraint = _.without([$scope.highchartConfig.seriesNameMLConstraint], null, undefined);
+      $scope.xAxisMLConstraint = _.without([$scope.highchartConfig.xAxisMLConstraint], null, undefined);
+      $scope.xAxisCategoriesMLConstraint = _.without([$scope.highchartConfig.xAxisCategoriesMLConstraint], null, undefined);
+      $scope.yAxisMLConstraint = _.without([$scope.highchartConfig.yAxisMLConstraint], null, undefined);
+      $scope.zAxisMLConstraint = _.without([$scope.highchartConfig.zAxisMLConstraint], null, undefined);
+
+      var reloadSeriesData = function() {
+        $scope.mlSearch.search();
+      };
+
+      $scope.chartTypes = HighchartsHelper.chartTypes();
+      reloadSeriesData();
+
+      $scope.$watch(function() {
+        return $scope.highchartConfig.options.chart.type + $scope.highchartConfig.xAxis.title.text + $scope.highchartConfig.yAxis.title.text + $scope.highchartConfig.title.text + $scope.highchartConfig.resultLimit;
+      }, function() {
+        reloadSeriesData();
+      });
+
+      $scope.$watch(function() {
+        return $scope.xAxisMLConstraint.length + '' + $scope.yAxisMLConstraint.length +
+          '' + $scope.zAxisMLConstraint.length + '' + $scope.xAxisCategoriesMLConstraint.length +
+          '' + $scope.seriesNameMLConstraint.length + '' + $scope.dataPointNameMLConstraint.length +
+          '' + $scope.highchartConfig.xAxisMLConstraintAggregate + '' + $scope.highchartConfig.yAxisMLConstraintAggregate +
+          '' + $scope.highchartConfig.zAxisMLConstraintAggregate;
+      }, function() {
+        $scope.highchartConfig.seriesNameMLConstraint = $scope.seriesNameMLConstraint[0];
+        $scope.highchartConfig.dataPointNameMLConstraint = $scope.dataPointNameMLConstraint[0];
+        $scope.highchartConfig.xAxisMLConstraint = $scope.xAxisMLConstraint[0];
+        $scope.highchartConfig.yAxisMLConstraint = $scope.yAxisMLConstraint[0];
+        $scope.highchartConfig.zAxisMLConstraint = $scope.zAxisMLConstraint[0];
+        $scope.highchartConfig.xAxisCategoriesMLConstraint = $scope.xAxisCategoriesMLConstraint[0];
+        reloadSeriesData();
+      });
+
+      $scope.save = function() {
+        $uibModalInstance.close($scope.highchartConfig);
+      };
+    }])
+
+  /**
+   * @ngdoc dialog
+   * @name EditChartConfigDialog
+   * @kind function
+   * @description A UI Bootstrap component that provides a modal dialog for
+   * adding/editing a highcart config to the application.
+   */
+  .factory('EditChartConfigDialog', [
+    '$uibModal', 'MLSearchFactory',
+    function($uibModal, searchFactory) {
+      return function(facets, highchartConfig, optionsName) {
+        return $uibModal.open({
+          templateUrl: '/ml-highcharts/templates/ml-highchart-config-modal.html',
+          controller: 'EditChartConfigCtrl',
+          size: 'lg',
+          resolve: {
+            facets: function() {
+              return facets;
+            },
+            highchartConfig: function() {
+              return highchartConfig;
+            },
+            mlSearch: function() {
+              return searchFactory.newContext({ 'queryOptions': optionsName || 'all'});
+            }
+          }
+        }).result;
+      };
+    }
+  ]);
+}());
+
+(function() {
+
+  'use strict';
+
+  /**
+   * angular element directive; a highchart based off of MarkLogic values result.
+   *
+   * attributes:
+   *
+   * - `highchart-config`: a reference to the model with chart config information
+   * - `ml-search`: optional. An mlSearch context to filter query.
+   * - `callback`: optional. A function reference to callback when a chart item is selected
+   *
+   * Example:
+   *
+   * ```
+   * <ml-highchart highchart-config="model.highChartConfig" ml-search="mlSearch"></ml-highchart>```
+   *
+   * @namespace ml-highchart
+   */
+  angular.module('ml.highcharts')
+    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
+
+      function link(scope, element, attrs) {
+        if (!scope.mlSearch) {
+          scope.mlSearch = searchFactory.newContext();
+        }
+        var loadData = function() {
+          if (scope.highchartConfig) {
+            HighchartsHelper.chartFromConfig(
+              scope.highchartConfig, scope.mlSearch,
+              scope.callback).then(function(populatedConfig) {
+              scope.populatedConfig = populatedConfig;
+            });
+          }
+        };
+        var reloadChartsDecorator = function(fn) {
+          return function() {
+            var results = fn.apply(this, arguments);
+            if (results && angular.isFunction(results.then)) {
+              // Then this is promise
+              return results.then(function(data) {
+                loadData();
+                return data;
+              });
+            } else {
+              loadData();
+              return results;
+            }
+          };
+        };
+
+        var origSearchFun = scope.mlSearch.search;
+        scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
+        loadData();
+
+      }
+
+      return {
+        restrict: 'E',
+        templateUrl: '/ml-highcharts/templates/ml-highchart.html',
+        scope: {
+          'mlSearch': '=',
+          'highchartConfig': '=',
+          'callback': '&'
+        },
+        link: link
+      };
+    }]);
+})();
+
+(function() {
+  'use strict';
 
   angular.module('ml.highcharts')
     .factory('HighchartsHelper', ['$q', 'MLQueryBuilder', 'MLRest', 'MLSearchFactory', function($q, MLQueryBuilder, MLRest, MLSearchFactory) {
@@ -530,253 +778,5 @@
       };
 
       return highchartsHelper;
-    }]);
-})();
-
-(function() {
-  'use strict';
-  /**
-   * @ngdoc controller
-   * @kind constructor
-   * @name EditChartConfigCtrl
-   * @description
-   * Controller for {@link editChartConfigDialog}. The controller is injected by the
-   * $modal service. Provides a user interface for configuring a highchart.
-   * See <a href="http://angular-ui.github.io/bootstrap/"
-   * target="_blank">ui.bootstrap.modal</a> for more information.
-   *
-   * @param {ui.bootstrap.modal.$modalInstance} $modalInstance (injected)
-   * @param {angular.Scope} $scope (injected)
-   * @param {ml.highcharts.HighchartsHelper} HighchartsHelper (injected)
-   * @param {object} facets object
-   * @param {object} highchartConfig object
-   * @param {ml.search.MLSearchFactory} MLSearchFactory (injected)
-   *
-   */
-
-  angular.module('ml.highcharts')
-    .controller('EditChartConfigCtrl', ['$modalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'mlSearch', function($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, mlSearch) {
-      $scope.facetSortOptions = {
-        clone: true,
-        accept: function(sourceItemHandleScope, destSortableScope) {
-          return true;
-        },
-        allowDuplicates: false
-      };
-      $scope.xSortOptions = {
-        accept: function(sourceItemHandleScope, destSortableScope) {
-          return destSortableScope.modelValue && destSortableScope.modelValue.length < 1;
-        }
-      };
-      $scope.mlSearch = mlSearch;
-      $scope.chartFacetOptions = Object.keys(facets);
-      var facetName = $scope.chartFacetOptions[0];
-      $scope.chartFacetOptions.push('$frequency');
-      $scope.aggregateTypes = HighchartsHelper.aggregateTypes();
-      $scope.facets = facets;
-      $scope.highchartConfig = highchartConfig || {
-        options: {
-          //This is the Main Highcharts chart config. Any Highchart options are valid here.
-          //will be overriden by values specified below.
-          chart: {
-            type: 'bar'
-          },
-          tooltip: {
-            style: {
-              padding: 10,
-              fontWeight: 'bold'
-            }
-          }
-        },
-        title: {
-          text: 'Title'
-        },
-        xAxis: {
-          title: {
-            text: facetName
-          }
-        },
-        seriesNameMLConstraint: facetName,
-        dataPointNameMLConstraint: null,
-        xAxisMLConstraint: null,
-        xAxisMLConstraintAggregate: null,
-        xAxisCategoriesMLConstraint: null,
-        xAxisCategoriesMLConstraintAggregate: null,
-        yAxis: {
-          title: {
-            text: null
-          }
-        },
-        yAxisMLConstraint: '$frequency',
-        yAxisMLConstraintAggregate: null,
-        zAxis: {
-          title: {
-            text: null
-          }
-        },
-        zAxisMLConstraint: null,
-        zAxisMLConstraintAggregate: null,
-        size: {
-          height: 250
-        },
-        resultLimit: 15
-      };
-
-      if (!$scope.highchartConfig.xAxis) {
-        $scope.highchartConfig.xAxis = {
-          title: {
-            text: null
-          }
-        };
-      }
-      if (!$scope.highchartConfig.yAxis) {
-        $scope.highchartConfig.yAxis = {
-          title: {
-            text: null
-          }
-        };
-      }
-
-      $scope.dataPointNameMLConstraint = _.without([$scope.highchartConfig.dataPointNameMLConstraint], null, undefined);
-      $scope.seriesNameMLConstraint = _.without([$scope.highchartConfig.seriesNameMLConstraint], null, undefined);
-      $scope.xAxisMLConstraint = _.without([$scope.highchartConfig.xAxisMLConstraint], null, undefined);
-      $scope.xAxisCategoriesMLConstraint = _.without([$scope.highchartConfig.xAxisCategoriesMLConstraint], null, undefined);
-      $scope.yAxisMLConstraint = _.without([$scope.highchartConfig.yAxisMLConstraint], null, undefined);
-      $scope.zAxisMLConstraint = _.without([$scope.highchartConfig.zAxisMLConstraint], null, undefined);
-
-      var reloadSeriesData = function() {
-        $scope.mlSearch.search();
-      };
-
-      $scope.chartTypes = HighchartsHelper.chartTypes();
-      reloadSeriesData();
-
-      $scope.$watch(function() {
-        return $scope.highchartConfig.options.chart.type + $scope.highchartConfig.xAxis.title.text + $scope.highchartConfig.yAxis.title.text + $scope.highchartConfig.title.text + $scope.highchartConfig.resultLimit;
-      }, function() {
-        reloadSeriesData();
-      });
-
-      $scope.$watch(function() {
-        return $scope.xAxisMLConstraint.length + '' + $scope.yAxisMLConstraint.length +
-          '' + $scope.zAxisMLConstraint.length + '' + $scope.xAxisCategoriesMLConstraint.length +
-          '' + $scope.seriesNameMLConstraint.length + '' + $scope.dataPointNameMLConstraint.length +
-          '' + $scope.highchartConfig.xAxisMLConstraintAggregate + '' + $scope.highchartConfig.yAxisMLConstraintAggregate +
-          '' + $scope.highchartConfig.zAxisMLConstraintAggregate;
-      }, function() {
-        $scope.highchartConfig.seriesNameMLConstraint = $scope.seriesNameMLConstraint[0];
-        $scope.highchartConfig.dataPointNameMLConstraint = $scope.dataPointNameMLConstraint[0];
-        $scope.highchartConfig.xAxisMLConstraint = $scope.xAxisMLConstraint[0];
-        $scope.highchartConfig.yAxisMLConstraint = $scope.yAxisMLConstraint[0];
-        $scope.highchartConfig.zAxisMLConstraint = $scope.zAxisMLConstraint[0];
-        $scope.highchartConfig.xAxisCategoriesMLConstraint = $scope.xAxisCategoriesMLConstraint[0];
-        reloadSeriesData();
-      });
-
-      $scope.save = function() {
-        $modalInstance.close($scope.highchartConfig);
-      };
-    }])
-
-  /**
-   * @ngdoc dialog
-   * @name EditChartConfigDialog
-   * @kind function
-   * @description A UI Bootstrap component that provides a modal dialog for
-   * adding/editing a highcart config to the application.
-   */
-  .factory('EditChartConfigDialog', [
-    '$modal', 'MLSearchFactory',
-    function($modal, searchFactory) {
-      return function(facets, highchartConfig, optionsName) {
-        return $modal.open({
-          templateUrl: '/ml-highcharts/templates/ml-highchart-config-modal.html',
-          controller: 'EditChartConfigCtrl',
-          size: 'lg',
-          resolve: {
-            facets: function() {
-              return facets;
-            },
-            highchartConfig: function() {
-              return highchartConfig;
-            },
-            mlSearch: function() {
-              return searchFactory.newContext({ 'queryOptions': optionsName || 'all'});
-            }
-          }
-        }).result;
-      };
-    }
-  ]);
-}());
-
-(function() {
-
-  'use strict';
-
-  /**
-   * angular element directive; a highchart based off of MarkLogic values result.
-   *
-   * attributes:
-   *
-   * - `highchart-config`: a reference to the model with chart config information
-   * - `ml-search`: optional. An mlSearch context to filter query.
-   * - `callback`: optional. A function reference to callback when a chart item is selected
-   *
-   * Example:
-   *
-   * ```
-   * <ml-highchart highchart-config="model.highChartConfig" ml-search="mlSearch"></ml-highchart>```
-   *
-   * @namespace ml-highchart
-   */
-  angular.module('ml.highcharts')
-    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
-
-      function link(scope, element, attrs) {
-        if (!scope.mlSearch) {
-          scope.mlSearch = searchFactory.newContext();
-        }
-        var loadData = function() {
-          if (scope.highchartConfig) {
-            HighchartsHelper.chartFromConfig(
-              scope.highchartConfig, scope.mlSearch,
-              scope.callback).then(function(populatedConfig) {
-              scope.populatedConfig = populatedConfig;
-            });
-          }
-        };
-        var reloadChartsDecorator = function(fn) {
-          return function() {
-            var results = fn.apply(this, arguments);
-            if (results && angular.isFunction(results.then)) {
-              // Then this is promise
-              return results.then(function(data) {
-                loadData();
-                return data;
-              });
-            } else {
-              loadData();
-              return results;
-            }
-          };
-        };
-
-        var origSearchFun = scope.mlSearch.search;
-        scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
-        loadData();
-
-      }
-
-      return {
-        restrict: 'E',
-        templateUrl: '/ml-highcharts/templates/ml-highchart.html',
-        scope: {
-          'mlSearch': '=',
-          'highchartConfig': '=',
-          'callback': '&'
-        },
-        link: link
-      };
     }]);
 })();
