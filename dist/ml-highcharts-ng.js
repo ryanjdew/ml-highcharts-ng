@@ -205,13 +205,22 @@
     .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
 
       function link(scope, element, attrs) {
+  
         if (!scope.mlSearch) {
           scope.mlSearch = searchFactory.newContext();
         }
+
+        var mlSearch = scope.mlSearch;
+
+        if (scope.structuredQuery) {
+          mlSearch = searchFactory.newContext();
+          mlSearch.addAdditionalQuery(scope.structuredQuery);
+        }
+        
         var loadData = function() {
           if (scope.highchartConfig) {
             HighchartsHelper.chartFromConfig(
-              scope.highchartConfig, scope.mlSearch,
+              scope.highchartConfig, mlSearch,
               scope.callback).then(function(populatedConfig) {
               scope.populatedConfig = populatedConfig;
             });
@@ -233,10 +242,15 @@
           };
         };
 
-        var origSearchFun = scope.mlSearch.search;
-        scope.mlSearch.search = reloadChartsDecorator(origSearchFun);
+        var origSearchFun = mlSearch.search;
+        mlSearch.search = reloadChartsDecorator(origSearchFun);
+
         loadData();
 
+        scope.$watch('structuredQuery', function() {
+          loadData();
+        });
+          
       }
 
       return {
@@ -244,6 +258,7 @@
         templateUrl: '/ml-highcharts/templates/ml-highchart.html',
         scope: {
           'mlSearch': '=',
+          'structuredQuery': '=',
           'highchartConfig': '=',
           'callback': '&'
         },
