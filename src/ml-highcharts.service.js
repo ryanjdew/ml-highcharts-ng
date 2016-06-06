@@ -4,6 +4,16 @@
   angular.module('ml.highcharts')
     .factory('HighchartsHelper', ['$q', 'MLQueryBuilder', 'MLRest', 'MLSearchFactory', function($q, MLQueryBuilder, MLRest, MLSearchFactory) {
       var highchartsHelper = {};
+      var _storedOptionPromises = {};
+
+      function getStoredOptions(mlSearch) {
+        var queryOptions = mlSearch.options.queryOptions;
+        if (!_storedOptionPromises[queryOptions]) {
+          _storedOptionPromises[queryOptions] = mlSearch.getStoredOptions(queryOptions);
+        }
+        return _storedOptionPromises[queryOptions];
+      }
+
       highchartsHelper.seriesData = function(data, chartType, categories) {
         var seriesData = [{
           name: null,
@@ -93,7 +103,7 @@
             }
           };
         }
-        mlSearch.getStoredOptions(mlSearch.options.queryOptions).then(function(data) {
+        getStoredOptions(mlSearch).then(function(data) {
           if (data.options && data.options.constraint && data.options.constraint.length) {
             highchartsHelper.getChartData(mlSearch, data.options.constraint, highchartConfig, highchartConfig.resultLimit).then(function(values) {
               chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories);
