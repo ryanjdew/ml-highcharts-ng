@@ -15,10 +15,7 @@
       }
 
       highchartsHelper.seriesData = function(data, chartType, categories) {
-        var seriesData = [{
-          name: null,
-          data: []
-        }];
+        var seriesData = [];
         angular.forEach(data, function(dp) {
           var series;
           if (dp.seriesName) {
@@ -35,6 +32,14 @@
           } else {
             series = seriesData[0];
           }
+          if (!series) {
+            series = {
+              name: dp.facetNames.join(' - '),
+              data: []
+            };
+            seriesData.push(series);
+          }
+
           if (categories.length) {
             angular.forEach(categories, function(cat, catIndex) {
               if (cat === dp.xCategory) {
@@ -63,19 +68,12 @@
           angular.forEach(seriesData, function(series) {
             angular.forEach(categories, function(cat, catIndex) {
               if (!series.data[catIndex]) {
-                series.data[catIndex] = {
-                  name: null,
-                  x: 0,
-                  y: 0,
-                  z: 0
-                };
+                series.data[catIndex] = {};
               }
             });
           });
         }
-        return _.filter(seriesData, function(val) {
-          return val.name || (val.data && val.data.length);
-        });
+        return seriesData;
       };
 
       highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, callback) {
