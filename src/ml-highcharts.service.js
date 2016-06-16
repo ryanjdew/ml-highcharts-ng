@@ -16,6 +16,9 @@
 
       highchartsHelper.seriesData = function(data, chartType, categories) {
         var seriesData = [];
+
+        // Loop over all data points to push them into the correct series,
+        // based on either seriesName, or using facetNames as default..
         angular.forEach(data, function(dp) {
           var series;
           if (dp.seriesName) {
