@@ -84,8 +84,8 @@
         restrict: 'E',
         templateUrl: '/ml-highcharts/templates/ml-highchart.html',
         scope: {
-          'mlSearch': '=',
-          'structuredQuery': '=',
+          'mlSearch': '=?',
+          'structuredQuery': '=?',
           'highchartConfig': '=',
           'callback': '&'
         },
