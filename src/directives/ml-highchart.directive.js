@@ -62,12 +62,22 @@
         var origSearchFun = mlSearch.search;
         mlSearch.search = reloadChartsDecorator(origSearchFun);
 
-        loadData();
-
-        scope.$watch('structuredQuery', function() {
+        if (attrs.structuredQuery) {
+          scope.$watch('structuredQuery', function(newVal) {
+            if (newVal && !angular.equals({}, newVal)) {
+              loadData();
+            }
+          }, true);
+        } else if (attrs.mlSearch) {
+          scope.$watch('mlSearch.results', function(newVal) {
+            if (newVal && !angular.equals({}, newVal)) {
+              loadData();
+            }
+          }, true);
+        } else {
           loadData();
-        });
-          
+        }
+
       }
 
       return {
