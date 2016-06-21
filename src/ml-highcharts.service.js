@@ -216,12 +216,14 @@
         if (additionalQuery && additionalQuery.length) {
           query.queries.unshift.apply(query.queries, additionalQuery);
         }
+        var qtext = mlSearch && mlSearch.getText();
         var constraintOptions = {
           'search': {
             'options': {
               'constraint': constraints
             },
-            'query': query
+            'query': query,
+            'qtext': qtext || ''
           }
         };
         if (filteredConstraints.length > 1) {
