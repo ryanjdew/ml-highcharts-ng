@@ -357,7 +357,7 @@
       highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, callback) {
         var d = $q.defer();
         var chartType = highchartConfig.options.chart.type;
-        var chart = highchartConfig;
+        var chart = angular.copy(highchartConfig);
         if (!mlSearch) {
           mlSearch = MLSearchFactory.newContext();
         }

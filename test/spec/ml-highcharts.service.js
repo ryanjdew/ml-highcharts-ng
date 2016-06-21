@@ -73,19 +73,48 @@ describe('HighchartsHelper#mock-service', function () {
     highchartsHelper.chartFromConfig(tuplesHighchartConfig).then(function(populatedConfig) {
       var results = mockTuplesResults['values-response'].tuple;
       for (var i = 0; i < populatedConfig.xAxis.categories.length; i++) {
-        var seriesName = populatedConfig.xAxis.categories[i];
-        var expectedSeriesSum = 0;
+        var categoryName = populatedConfig.xAxis.categories[i];
+        var expectedCategorySum = 0;
         for (var j = 0; j < results.length; j++) {
-          if (seriesName === results[j]['distinct-value'][1]._value) {
-            expectedSeriesSum += results[j].frequency;
+          if (categoryName === results[j]['distinct-value'][1]._value) {
+            expectedCategorySum += results[j].frequency;
           }
         }
-        var seriesSum = 0;
+        var categorySum = 0;
 
         for (var k = 0; k < populatedConfig.series.length; k++) {
-          seriesSum += populatedConfig.series[k].data[i].y;
+          var yVals = _.filter(populatedConfig.series[k].data, function(val) {
+            return val.x === i;
+          });
+          categorySum += _.reduce(yVals, function(memo, num){ return memo + (num.y) ? num.y : 0; }, 0);
         }
-        expect(expectedSeriesSum).toEqual(seriesSum);
+        expect(expectedCategorySum).toEqual(categorySum);
+      }
+    });
+    $rootScope.$digest();
+    tuplesHighchartConfig.xAxisCategoriesMLConstraint = undefined;
+    tuplesHighchartConfig.yAxisCategoriesMLConstraint = "Ingredients";
+    tuplesHighchartConfig.yAxisMLConstraint = undefined;
+    tuplesHighchartConfig.xAxisMLConstraint = "$frequency";
+    highchartsHelper.chartFromConfig(tuplesHighchartConfig).then(function(populatedConfig) {
+      var results = mockTuplesResults['values-response'].tuple;
+      for (var i = 0; i < populatedConfig.yAxis.categories.length; i++) {
+        var categoryName = populatedConfig.yAxis.categories[i];
+        var expectedCategorySum = 0;
+        for (var j = 0; j < results.length; j++) {
+          if (categoryName === results[j]['distinct-value'][1]._value) {
+            expectedCategorySum += results[j].frequency;
+          }
+        }
+        var categorySum = 0;
+
+        for (var k = 0; k < populatedConfig.series.length; k++) {
+          var xVals = _.filter(populatedConfig.series[k].data, function(val) {
+            return val.y === i;
+          });
+          categorySum += _.reduce(xVals, function(memo, num){ return memo + (num.x) ? num.x : 0; }, 0);
+        }
+        expect(expectedCategorySum).toEqual(categorySum);
       }
     });
     $rootScope.$digest();

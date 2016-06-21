@@ -18,7 +18,7 @@
       "text": "Ingredients"
     }
   },
-  "dataPointNameMLConstraint": "Category",
+  "seriesNameMLConstraint": "Category",
   "xAxisCategoriesMLConstraint": "Ingredients",
   "yAxis": {
     "title": {
@@ -35,5 +35,5 @@
     "height": 250,
     "width": 300
   },
-  "resultLimit": 15
+  "resultLimit": 100
 }
