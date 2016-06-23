@@ -31,6 +31,7 @@ module.exports = function(config) {
 
       'bower_components/lodash/dist/lodash.min.js', // v2.4.x
       'bower_components/lodash/lodash.js', // v3.x
+      'bower_components/highcharts/highcharts.js',
       'bower_components/highcharts-ng/dist/highcharts-ng.min.js',
       'bower_components/ml-common-ng/dist/ml-common-ng.js',
       'bower_components/ml-search-ng/dist/ml-search-ng.js',

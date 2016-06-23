@@ -53,6 +53,14 @@ describe('HighchartsHelper#mock-service', function () {
     highchartsHelper = $injector.get('HighchartsHelper');
   }));
 
+  // Store references to $rootScope and $compile
+  // so they are available to all tests in this describe block
+  beforeEach(inject(function(_$compile_, _$rootScope_){
+    // The injector unwraps the underscores (_) from around the parameter names when matching
+    $compile = _$compile_;
+    $rootScope = _$rootScope_;
+  }));
+
   it('should transform values to chart series', function() {
     highchartsHelper.chartFromConfig(valuesHighchartConfig).then(function(populatedConfig) {
       var results = mockValuesResults['values-response']['distinct-value'];
@@ -118,6 +126,69 @@ describe('HighchartsHelper#mock-service', function () {
       }
     });
     $rootScope.$digest();
+  });
+
+  it('replaces the element with the appropriate content', function() {
+    // Compile a piece of HTML containing the directive
+    $rootScope.highchartConfig = tuplesHighchartConfig;
+    $rootScope.highchartConfig.series.length = 0;
+    var element = $compile('<ml-highchart highchart-config="highchartConfig"></ml-highchart>')($rootScope);
+    $rootScope.$digest();
+    // Check that the compiled element contains the templated content
+    expect(element.html()).toContain("Highcharts");
+  });
+
+  it('reloads when mlSearch.results changes', function() {
+    // Compile a piece of HTML containing the directive
+    $rootScope.highchartConfig = tuplesHighchartConfig;
+    $rootScope.highchartConfig.series.length = 0;
+    var origChartFromConfig = highchartsHelper.chartFromConfig;
+    highchartsHelper.chartFromConfig = jasmine.createSpy('chartFromConfig').and.callFake(function() {
+      return origChartFromConfig.apply(highchartsHelper, arguments);
+    });
+    $rootScope.mlSearch = {
+      options: {
+        queryOptions: 'all'
+      },
+      getStoredOptions: function() {
+        return $q.when({
+          options: {}
+        });
+      },
+      results: [],
+      search: jasmine.createSpy('search').and.callFake(function() {
+        var d = $q.defer();
+        d.resolve({data: mockOptions});
+        return d.promise;
+      })
+    };
+    var element = $compile('<ml-highchart ml-search="mlSearch" highchart-config="highchartConfig"></ml-highchart>')($rootScope);
+    $rootScope.$digest();
+    expect(highchartsHelper.chartFromConfig.calls.count()).toEqual(1);
+    $rootScope.mlSearch.results.push({'test': 1});
+    $rootScope.$digest();
+    expect(highchartsHelper.chartFromConfig.calls.count()).toEqual(2);
+  });
+
+  it('reloads when structured query changes', function() {
+    // Compile a piece of HTML containing the directive
+    $rootScope.highchartConfig = tuplesHighchartConfig;
+    $rootScope.highchartConfig.series.length = 0;
+    var origChartFromConfig = highchartsHelper.chartFromConfig;
+    highchartsHelper.chartFromConfig = jasmine.createSpy('chartFromConfig').and.callFake(function() {
+      return origChartFromConfig.apply(highchartsHelper, arguments);
+    });
+    $rootScope.structuredQuery = {
+        'and-query': {
+          'query': []
+        }
+      };
+    var element = $compile('<ml-highchart structured-query="structuredQuery" highchart-config="highchartConfig"></ml-highchart>')($rootScope);
+    $rootScope.$digest();
+    expect(highchartsHelper.chartFromConfig.calls.count()).toEqual(1);
+    $rootScope.structuredQuery['and-query'].query.push({'qtext': 'this is a test'});
+    $rootScope.$digest();
+    expect(highchartsHelper.chartFromConfig.calls.count()).toEqual(2);
   });
 
 });
