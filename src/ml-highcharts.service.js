@@ -2,7 +2,10 @@
   'use strict';
 
   angular.module('ml.highcharts')
-    .factory('HighchartsHelper', ['$q', 'MLQueryBuilder', 'MLRest', 'MLSearchFactory', function($q, MLQueryBuilder, MLRest, MLSearchFactory) {
+    .factory('HighchartsHelper', [
+      '$q', 'MLQueryBuilder', 'MLRest', 
+      'MLSearchFactory', 
+    function($q, MLQueryBuilder, MLRest, MLSearchFactory) {
       var highchartsHelper = {};
       var _storedOptionPromises = {};
 
@@ -78,7 +81,7 @@
       highchartsHelper.chartFromConfig = function(highchartConfig, mlSearch, callback) {
         var d = $q.defer();
         var chartType = highchartConfig.options.chart.type;
-        var chart = highchartConfig;
+        var chart = angular.copy(highchartConfig);
         if (!mlSearch) {
           mlSearch = MLSearchFactory.newContext();
         }
@@ -411,13 +414,46 @@
                             var vals = tup['distinct-value'];
                             var dataPoint = {
                               facetNames: facetNames,
-                              seriesName: getValue(_.without([vals[dataConfig.values.seriesNameIndex], facetCombination[dataConfig.facets.seriesNameIndex]], null, undefined)[0]),
-                              name: getValue(_.without([vals[dataConfig.values.dataPointNameIndex], facetCombination[dataConfig.facets.dataPointNameIndex]], null, undefined)[0]),
-                              xCategory: getValue(_.without([vals[dataConfig.values.xCategoryAxisIndex], facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)[0]),
-                              x: getValue(_.without([vals[dataConfig.values.xAxisIndex], facetCombination[dataConfig.facets.xAxisIndex]], null, undefined)[0]),
-                              yCategory: getValue(_.without([vals[dataConfig.values.yCategoryAxisIndex], facetCombination[dataConfig.facets.yCategoryAxisIndex]], null, undefined)[0]),
-                              y: getValue(_.without([vals[dataConfig.values.yAxisIndex], facetCombination[dataConfig.facets.yAxisIndex]], null, undefined)[0]),
-                              z: getValue(_.without([vals[dataConfig.values.zAxisIndex], facetCombination[dataConfig.facets.zAxisIndex]], null, undefined)[0])
+                              seriesName: 
+                                getValue(
+                                  _.without([
+                                    vals[dataConfig.values.seriesNameIndex], 
+                                    facetCombination[dataConfig.facets.seriesNameIndex]
+                                  ], null, undefined)[0]),
+                              name: 
+                                getValue(
+                                  _.without([
+                                    vals[dataConfig.values.dataPointNameIndex], facetCombination[dataConfig.facets.dataPointNameIndex]
+                                  ], null, undefined)[0]),
+                              xCategory: 
+                                getValue(
+                                  _.without([
+                                    vals[dataConfig.values.xCategoryAxisIndex], facetCombination[dataConfig.facets.xCategoryAxisIndex]
+                                  ], null, undefined)[0]),
+                              x: 
+                                getValue(
+                                  _.without([
+                                    vals[dataConfig.values.xAxisIndex], 
+                                    facetCombination[dataConfig.facets.xAxisIndex]
+                                  ], null, undefined)[0]),
+                              yCategory: 
+                                getValue(
+                                  _.without([
+                                    vals[dataConfig.values.yCategoryAxisIndex], 
+                                    facetCombination[dataConfig.facets.yCategoryAxisIndex]
+                                  ], null, undefined)[0]),
+                              y: 
+                                getValue(
+                                  _.without([
+                                    vals[dataConfig.values.yAxisIndex], 
+                                    facetCombination[dataConfig.facets.yAxisIndex]
+                                  ], null, undefined)[0]),
+                              z: 
+                                getValue(
+                                  _.without([
+                                    vals[dataConfig.values.zAxisIndex], 
+                                    facetCombination[dataConfig.facets.zAxisIndex]
+                                  ], null, undefined)[0])
                             };
                             if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                               valueIndexes.push(dataPoint.xCategory);
@@ -436,13 +472,48 @@
                           angular.forEach(results['values-response']['distinct-value'], function(valueObj) {
                             var dataPoint = {
                               facetNames: facetNames,
-                              seriesName: getValue(_.without([(dataConfig.values.seriesNameIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.seriesNameIndex]], null, undefined)[0]),
-                              name: getValue(_.without([(dataConfig.values.dataPointNameIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.dataPointNameIndex]], null, undefined)[0]),
-                              xCategory: getValue(_.without([(dataConfig.values.xCategoryAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.xCategoryAxisIndex]], null, undefined)[0]),
-                              x: getValue(_.without([(dataConfig.values.xAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.xAxisIndex]], null, undefined)[0]),
-                              yCategory: getValue(_.without([(dataConfig.values.yCategoryAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.yCategoryAxisIndex]], null, undefined)[0]),
-                              y: getValue(_.without([(dataConfig.values.yAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.yAxisIndex]], null, undefined)[0]),
-                              z: getValue(_.without([(dataConfig.values.zAxisIndex > -1) ? valueObj : null, facetCombination[dataConfig.facets.zAxisIndex]], null, undefined)[0])
+                              seriesName: 
+                                getValue(
+                                  _.without([
+                                    (dataConfig.values.seriesNameIndex > -1) ? valueObj : null, 
+                                    facetCombination[dataConfig.facets.seriesNameIndex]
+                                  ], null, undefined)[0]),
+                              name: 
+                                getValue(
+                                  _.without([
+                                    (dataConfig.values.dataPointNameIndex > -1) ? valueObj : null, 
+                                    facetCombination[dataConfig.facets.dataPointNameIndex]
+                                  ], null, undefined)[0]),
+                              xCategory: 
+                                getValue(
+                                  _.without([
+                                    (dataConfig.values.xCategoryAxisIndex > -1) ? valueObj : null, 
+                                    facetCombination[dataConfig.facets.xCategoryAxisIndex]
+                                  ], null, undefined)[0]),
+                              x: 
+                                getValue(
+                                  _.without([
+                                    (dataConfig.values.xAxisIndex > -1) ? valueObj : null, 
+                                    facetCombination[dataConfig.facets.xAxisIndex]
+                                  ], null, undefined)[0]),
+                              yCategory: 
+                                getValue(
+                                  _.without([
+                                    (dataConfig.values.yCategoryAxisIndex > -1) ? valueObj : null, 
+                                    facetCombination[dataConfig.facets.yCategoryAxisIndex]
+                                  ], null, undefined)[0]),
+                              y: 
+                                getValue(
+                                  _.without([
+                                    (dataConfig.values.yAxisIndex > -1) ? valueObj : null, 
+                                    facetCombination[dataConfig.facets.yAxisIndex]
+                                  ], null, undefined)[0]),
+                              z: 
+                                getValue(
+                                  _.without([
+                                    (dataConfig.values.zAxisIndex > -1) ? valueObj : null, 
+                                    facetCombination[dataConfig.facets.zAxisIndex]
+                                  ], null, undefined)[0])
                             };
                             if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                               valueIndexes.push(dataPoint.xCategory);
@@ -451,7 +522,10 @@
                               yValueIndexes.push(dataPoint.yCategory);
                             }
                             if (!dataPoint.name) {
-                              dataPoint.name = _.without([dataPoint.xCategory, dataPoint.x, dataPoint.yCategory, dataPoint.y, dataPoint.z], null, undefined).join();
+                              dataPoint.name = 
+                                _.without([
+                                  dataPoint.xCategory, dataPoint.x, dataPoint.yCategory, dataPoint.y, dataPoint.z
+                                ], null, undefined).join();
                             }
                             dataPoint[dataConfig.frequency] = valueObj.frequency;
                             dataPoint.frequency = valueObj.frequency;
@@ -551,8 +625,15 @@
         });
       };
 
-      highchartsHelper.constraintValueCall = function(mlSearch, constraints, constraintsFromValues, limit, combinationQuery, aggregate) {
-        var constraintOptions = getSearchConstraintOptions(mlSearch, constraints, constraintsFromValues, limit, combinationQuery);
+      highchartsHelper.constraintValueCall = function(
+          mlSearch, constraints, constraintsFromValues, 
+          limit, combinationQuery, aggregate
+      ) {
+        var constraintOptions = 
+          getSearchConstraintOptions(
+            mlSearch, constraints, constraintsFromValues, 
+            limit, combinationQuery
+          );
         return MLRest.values('cooccurrence', {
             format: 'json',
             aggregate: aggregate,

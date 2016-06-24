@@ -62,21 +62,28 @@
         var origSearchFun = mlSearch.search;
         mlSearch.search = reloadChartsDecorator(origSearchFun);
 
-        if (attrs.structuredQuery) {
-          scope.$watch('structuredQuery', function(newVal) {
-            if (newVal && !angular.equals({}, newVal)) {
-              loadData();
+        var structuredQueryWatch = null;
+        var mlSearchWatch = null;
+
+        scope.$watch('highchartConfig', function(newVal, oldValue) {
+          if (newVal && !angular.equals({}, newVal)) {
+            if (attrs.structuredQuery && !structuredQueryWatch) {
+              structuredQueryWatch = scope.$watch('structuredQuery', function(newVal) {
+                if (newVal && !angular.equals({}, newVal)) {
+                  loadData();
+                }
+              }, true);
+            } else if (attrs.mlSearch && !mlSearchWatch) {
+              mlSearchWatch = scope.$watch('mlSearch.results', function(newVal) {
+                if (newVal && !angular.equals({}, newVal)) {
+                  loadData();
+                }
+              }, true);
+            } else if (oldValue || !(attrs.mlSearch || attrs.structuredQuery)) {
+             loadData();
             }
-          }, true);
-        } else if (attrs.mlSearch) {
-          scope.$watch('mlSearch.results', function(newVal) {
-            if (newVal && !angular.equals({}, newVal)) {
-              loadData();
-            }
-          }, true);
-        } else {
-          loadData();
-        }
+          }
+        }, true);
 
       }
 

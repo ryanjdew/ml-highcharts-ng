@@ -131,7 +131,6 @@ describe('HighchartsHelper#mock-service', function () {
   it('replaces the element with the appropriate content', function() {
     // Compile a piece of HTML containing the directive
     $rootScope.highchartConfig = tuplesHighchartConfig;
-    $rootScope.highchartConfig.series.length = 0;
     var element = $compile('<ml-highchart highchart-config="highchartConfig"></ml-highchart>')($rootScope);
     $rootScope.$digest();
     // Check that the compiled element contains the templated content
@@ -141,7 +140,6 @@ describe('HighchartsHelper#mock-service', function () {
   it('reloads when mlSearch.results changes', function() {
     // Compile a piece of HTML containing the directive
     $rootScope.highchartConfig = tuplesHighchartConfig;
-    $rootScope.highchartConfig.series.length = 0;
     var origChartFromConfig = highchartsHelper.chartFromConfig;
     highchartsHelper.chartFromConfig = jasmine.createSpy('chartFromConfig').and.callFake(function() {
       return origChartFromConfig.apply(highchartsHelper, arguments);
@@ -173,7 +171,6 @@ describe('HighchartsHelper#mock-service', function () {
   it('reloads when structured query changes', function() {
     // Compile a piece of HTML containing the directive
     $rootScope.highchartConfig = tuplesHighchartConfig;
-    $rootScope.highchartConfig.series.length = 0;
     var origChartFromConfig = highchartsHelper.chartFromConfig;
     highchartsHelper.chartFromConfig = jasmine.createSpy('chartFromConfig').and.callFake(function() {
       return origChartFromConfig.apply(highchartsHelper, arguments);
