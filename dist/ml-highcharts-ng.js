@@ -26,7 +26,13 @@
    */
 
   angular.module('ml.highcharts')
-    .controller('EditChartConfigCtrl', ['$uibModalInstance', '$scope', 'HighchartsHelper', 'facets', 'highchartConfig', 'mlSearch', function($uibModalInstance, $scope, HighchartsHelper, facets, highchartConfig, mlSearch) {
+    .controller('EditChartConfigCtrl', [
+      '$uibModalInstance', '$scope', '$timeout', 'HighchartsHelper', 
+      'facets', 'highchartConfig', 'mlSearch', 
+      function(
+        $uibModalInstance, $scope, $timeout, HighchartsHelper, 
+        facets, highchartConfig, mlSearch
+      ) {
       $scope.facetSortOptions = {
         clone: true,
         accept: function(sourceItemHandleScope, destSortableScope) {
@@ -116,7 +122,18 @@
       $scope.zAxisMLConstraint = _.without([$scope.highchartConfig.zAxisMLConstraint], null, undefined);
 
       var reloadSeriesData = function() {
-        $scope.mlSearch.search();
+        if ($scope.highchartConfig.series) {
+          $scope.highchartConfig.series.length = 0;
+        }
+        if ($scope.highchartConfig.xAxis.categories) {
+          $scope.highchartConfig.xAxis.categories.length = 0;
+          $scope.highchartConfig.xAxis.categories = undefined;
+        }
+        $scope.reset = true;
+        $timeout(function() {
+          $scope.reset = false;
+          $scope.mlSearch.search();
+        });
       };
 
       $scope.chartTypes = HighchartsHelper.chartTypes();
