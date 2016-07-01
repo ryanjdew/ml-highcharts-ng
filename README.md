@@ -50,7 +50,7 @@ app.js
       // constraint name for x axis
       'xAxisMLConstraint': 'Ingredients',
       // optional constraint name for categorizing x axis values
-      'xAxisCategoriesMLConstraint': 'Category',
+      'dataPointNameMLConstraint': 'Category',
       'yAxis': {
         'title': {
           'text': 'Frequency'
