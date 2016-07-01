@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <meta name="generator" content="JSDoc 3.3.2">
+  <meta name="generator" content="JSDoc 3.4.0">
   <meta charset="utf-8">
   <title>Source: dialogs/edit-highcharts-config.js</title>
   <link rel="stylesheet" href="https://brick.a.ssl.fastly.net/Karla:400,400i,700,700i" type="text/css">
@@ -37,11 +37,11 @@
    * @name EditChartConfigCtrl
    * @description
    * Controller for {@link editChartConfigDialog}. The controller is injected by the
-   * $modal service. Provides a user interface for configuring a highchart.
+   * $uibModal service. Provides a user interface for configuring a highchart.
    * See &amp;lt;a href=&quot;http://angular-ui.github.io/bootstrap/&quot;
    * target=&quot;_blank&quot;&gt;ui.bootstrap.modal&amp;lt;/a&gt; for more information.
    *
-   * @param {ui.bootstrap.modal.$modalInstance} $modalInstance (injected)
+   * @param {ui.bootstrap.modal.$uibModalInstance} $uibModalInstance (injected)
    * @param {angular.Scope} $scope (injected)
    * @param {ml.highcharts.HighchartsHelper} HighchartsHelper (injected)
    * @param {object} facets object
@@ -51,46 +51,73 @@
    */
 
   angular.module(&#x27;ml.highcharts&#x27;)
-  .controller(&#x27;EditChartConfigCtrl&#x27;, [&#x27;$modalInstance&#x27;, &#x27;$scope&#x27;, &#x27;HighchartsHelper&#x27;, &#x27;facets&#x27;, &#x27;highchartConfig&#x27;, &#x27;MLSearchFactory&#x27;, function ($modalInstance, $scope, HighchartsHelper, facets, highchartConfig, searchFactory) {
-      $scope.facetSortOptions = {};
+    .controller(&#x27;EditChartConfigCtrl&#x27;, [
+      &#x27;$uibModalInstance&#x27;, &#x27;$scope&#x27;, &#x27;$timeout&#x27;, &#x27;HighchartsHelper&#x27;, 
+      &#x27;facets&#x27;, &#x27;highchartConfig&#x27;, &#x27;mlSearch&#x27;, 
+      function(
+        $uibModalInstance, $scope, $timeout, HighchartsHelper, 
+        facets, highchartConfig, mlSearch
+      ) {
+      $scope.facetSortOptions = {
+        clone: true,
+        accept: function(sourceItemHandleScope, destSortableScope) {
+          return true;
+        },
+        allowDuplicates: false
+      };
       $scope.xSortOptions = {
-        accept: function (sourceItemHandleScope, destSortableScope) {
-          return destSortableScope.modelValue.length &amp;lt; 1;
+        accept: function(sourceItemHandleScope, destSortableScope) {
+          return destSortableScope.modelValue &amp;amp;&amp;amp; destSortableScope.modelValue.length &amp;lt; 1;
         }
       };
+      $scope.mlSearch = mlSearch;
       $scope.chartFacetOptions = Object.keys(facets);
       var facetName = $scope.chartFacetOptions[0];
-      $scope.chartFacetOptions.splice(0,1);
+      $scope.chartFacetOptions.push(&#x27;$frequency&#x27;);
+      $scope.aggregateTypes = HighchartsHelper.aggregateTypes();
       $scope.facets = facets;
       $scope.highchartConfig = highchartConfig || {
         options: {
-            //This is the Main Highcharts chart config. Any Highchart options are valid here.
-            //will be overriden by values specified below.
-            chart: {
-                type: &#x27;bar&#x27;
-            },
-            tooltip: {
-                style: {
-                    padding: 10,
-                    fontWeight: &#x27;bold&#x27;
-                }
+          //This is the Main Highcharts chart config. Any Highchart options are valid here.
+          //will be overriden by values specified below.
+          chart: {
+            type: &#x27;bar&#x27;
+          },
+          tooltip: {
+            style: {
+              padding: 10,
+              fontWeight: &#x27;bold&#x27;
             }
+          }
         },
         title: {
           text: &#x27;Title&#x27;
         },
         xAxis: {
-          title: {text: facetName}
+          title: {
+            text: facetName
+          }
         },
-        xAxisMLConstraint: facetName,
+        seriesNameMLConstraint: facetName,
+        dataPointNameMLConstraint: null,
+        xAxisMLConstraint: null,
+        xAxisMLConstraintAggregate: null,
         xAxisCategoriesMLConstraint: null,
+        xAxisCategoriesMLConstraintAggregate: null,
         yAxis: {
-          title: {text: null}
+          title: {
+            text: null
+          }
         },
         yAxisMLConstraint: &#x27;$frequency&#x27;,
+        yAxisMLConstraintAggregate: null,
         zAxis: {
-          title: {text: null}
+          title: {
+            text: null
+          }
         },
+        zAxisMLConstraint: null,
+        zAxisMLConstraintAggregate: null,
         size: {
           height: 250
         },
@@ -99,43 +126,68 @@
 
       if (!$scope.highchartConfig.xAxis) {
         $scope.highchartConfig.xAxis = {
-          title: {text: null}
+          title: {
+            text: null
+          }
         };
       }
       if (!$scope.highchartConfig.yAxis) {
         $scope.highchartConfig.yAxis = {
-          title: {text: null}
+          title: {
+            text: null
+          }
         };
       }
 
-      $scope.xAxisMLConstraint = [$scope.highchartConfig.xAxisMLConstraint];
-      $scope.xAxisCategoriesMLConstraint = [$scope.highchartConfig.xAxisCategoriesMLConstraint];
-      $scope.yAxisMLConstraint = [$scope.highchartConfig.yAxisMLConstraint];
+      $scope.dataPointNameMLConstraint = _.without([$scope.highchartConfig.dataPointNameMLConstraint], null, undefined);
+      $scope.seriesNameMLConstraint = _.without([$scope.highchartConfig.seriesNameMLConstraint], null, undefined);
+      $scope.xAxisMLConstraint = _.without([$scope.highchartConfig.xAxisMLConstraint], null, undefined);
+      $scope.xAxisCategoriesMLConstraint = _.without([$scope.highchartConfig.xAxisCategoriesMLConstraint], null, undefined);
+      $scope.yAxisMLConstraint = _.without([$scope.highchartConfig.yAxisMLConstraint], null, undefined);
+      $scope.zAxisMLConstraint = _.without([$scope.highchartConfig.zAxisMLConstraint], null, undefined);
 
       var reloadSeriesData = function() {
-        $scope.previewHighChart = HighchartsHelper.chartFromConfig($scope.highchartConfig);
+        if ($scope.highchartConfig.series) {
+          $scope.highchartConfig.series.length = 0;
+        }
+        if ($scope.highchartConfig.xAxis.categories) {
+          $scope.highchartConfig.xAxis.categories.length = 0;
+          $scope.highchartConfig.xAxis.categories = undefined;
+        }
+        $scope.reset = true;
+        $timeout(function() {
+          $scope.reset = false;
+          $scope.mlSearch.search();
+        });
       };
 
       $scope.chartTypes = HighchartsHelper.chartTypes();
       reloadSeriesData();
 
-      $scope.$watch(function() { 
+      $scope.$watch(function() {
         return $scope.highchartConfig.options.chart.type + $scope.highchartConfig.xAxis.title.text + $scope.highchartConfig.yAxis.title.text + $scope.highchartConfig.title.text + $scope.highchartConfig.resultLimit;
       }, function() {
         reloadSeriesData();
       });
-      
-      $scope.$watch(function() { 
-        return $scope.xAxisMLConstraint.length + &#x27;&#x27; + $scope.yAxisMLConstraint.length + &#x27;&#x27; + $scope.xAxisCategoriesMLConstraint.length;
+
+      $scope.$watch(function() {
+        return $scope.xAxisMLConstraint.length + &#x27;&#x27; + $scope.yAxisMLConstraint.length +
+          &#x27;&#x27; + $scope.zAxisMLConstraint.length + &#x27;&#x27; + $scope.xAxisCategoriesMLConstraint.length +
+          &#x27;&#x27; + $scope.seriesNameMLConstraint.length + &#x27;&#x27; + $scope.dataPointNameMLConstraint.length +
+          &#x27;&#x27; + $scope.highchartConfig.xAxisMLConstraintAggregate + &#x27;&#x27; + $scope.highchartConfig.yAxisMLConstraintAggregate +
+          &#x27;&#x27; + $scope.highchartConfig.zAxisMLConstraintAggregate;
       }, function() {
+        $scope.highchartConfig.seriesNameMLConstraint = $scope.seriesNameMLConstraint[0];
+        $scope.highchartConfig.dataPointNameMLConstraint = $scope.dataPointNameMLConstraint[0];
         $scope.highchartConfig.xAxisMLConstraint = $scope.xAxisMLConstraint[0];
         $scope.highchartConfig.yAxisMLConstraint = $scope.yAxisMLConstraint[0];
+        $scope.highchartConfig.zAxisMLConstraint = $scope.zAxisMLConstraint[0];
         $scope.highchartConfig.xAxisCategoriesMLConstraint = $scope.xAxisCategoriesMLConstraint[0];
         reloadSeriesData();
       });
-      
-      $scope.save = function () {
-        $modalInstance.close($scope.highchartConfig);
+
+      $scope.save = function() {
+        $uibModalInstance.close($scope.highchartConfig);
       };
     }])
 
@@ -147,26 +199,30 @@
    * adding/editing a highcart config to the application.
    */
   .factory(&#x27;EditChartConfigDialog&#x27;, [
-    &#x27;$modal&#x27;,
-    function ($modal) {
-      return function (facets, highchartConfig) {
-        return $modal.open({
-          templateUrl : &#x27;/ml-highcharts/templates/ml-highchart-config-modal.html&#x27;,
-          controller : &#x27;EditChartConfigCtrl&#x27;,
-          size : &#x27;lg&#x27;,
+    &#x27;$uibModal&#x27;, &#x27;MLSearchFactory&#x27;,
+    function($uibModal, searchFactory) {
+      return function(facets, highchartConfig, optionsName) {
+        return $uibModal.open({
+          templateUrl: &#x27;/ml-highcharts/templates/ml-highchart-config-modal.html&#x27;,
+          controller: &#x27;EditChartConfigCtrl&#x27;,
+          size: &#x27;lg&#x27;,
           resolve: {
             facets: function() {
               return facets;
             },
             highchartConfig: function() {
               return highchartConfig;
+            },
+            mlSearch: function() {
+              return searchFactory.newContext({ &#x27;queryOptions&#x27;: optionsName || &#x27;all&#x27;});
             }
           }
         }).result;
       };
     }
   ]);
-}());</code></pre>
+}());
+</code></pre>
           </article>
         </div>
       </div>
@@ -176,7 +232,7 @@
   <footer id="jsdoc-footer" class="jsdoc-footer">
     <div id="jsdoc-footer-container">
       <p>
-        Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc</a> 3.3.2 on July 27, 2015.
+        Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc</a> 3.4.0 on July 1, 2016.
       </p>
     </div>
   </footer>
