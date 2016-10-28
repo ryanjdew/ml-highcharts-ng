@@ -29,7 +29,7 @@
             </div>
             <div class="col-sm-6">
               <ul style="min-height:20px;border:1px dotted black;" as-sortable="xSortOptions" ng-model="seriesNameMLConstraint">
-                <li class="btn btn-default" ng-repeat="key in seriesNameMLConstraint" as-sortable-item as-sortable-item-handle>{{key}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="seriesNameMLConstraint.splice($index, 1)"><span
+                <li class="btn btn-default" ng-repeat="key in seriesNameMLConstraint" as-sortable-item as-sortable-item-handle>{{key | decodeString}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="seriesNameMLConstraint.splice($index, 1)"><span
                     class="glyphicon glyphicon-remove"></span></a></li>
               </ul>
             </div>
@@ -40,7 +40,7 @@
             </div>
             <div class="col-sm-6">
               <ul style="min-height:20px;border:1px dotted black;" as-sortable="xSortOptions" ng-model="dataPointNameMLConstraint">
-                <li class="btn btn-default" ng-repeat="key in dataPointNameMLConstraint" as-sortable-item as-sortable-item-handle>{{key}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="dataPointNameMLConstraint.splice($index, 1)"><span
+                <li class="btn btn-default" ng-repeat="key in dataPointNameMLConstraint" as-sortable-item as-sortable-item-handle>{{key | decodeString}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="dataPointNameMLConstraint.splice($index, 1)"><span
                     class="glyphicon glyphicon-remove"></span></a></li>
               </ul>
             </div>
@@ -51,7 +51,7 @@
             </div>
             <div class="col-sm-6">
               <ul style="min-height:20px;border:1px dotted black;" as-sortable="xSortOptions" ng-model="xAxisCategoriesMLConstraint">
-                <li class="btn btn-default" ng-repeat="key in xAxisCategoriesMLConstraint" as-sortable-item as-sortable-item-handle>{{key}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="xAxisCategoriesMLConstraint.splice($index, 1)"><span
+                <li class="btn btn-default" ng-repeat="key in xAxisCategoriesMLConstraint" as-sortable-item as-sortable-item-handle>{{key | decodeString}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="xAxisCategoriesMLConstraint.splice($index, 1)"><span
                     class="glyphicon glyphicon-remove"></span></a></li>
               </ul>
               <select ng-model="highchartConfig.xAxisCategoriesMLConstraintAggregate" ng-options="type for type in aggregateTypes" ng-disable="!highchartConfig.xAxisCategoriesMLConstraint"></select>
@@ -63,7 +63,7 @@
             </div>
             <div class="col-sm-6" as-sortable="xSortOptions" ng-model="xAxisMLConstraint">
               <ul style="min-height:20px;border:1px dotted black;">
-                <li class="btn btn-default" ng-repeat="key in xAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="xAxisMLConstraint.splice($index, 1)"><span
+                <li class="btn btn-default" ng-repeat="key in xAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key | decodeString}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="xAxisMLConstraint.splice($index, 1)"><span
                     class="glyphicon glyphicon-remove"></span></a></li>
               </ul>
               <select ng-model="highchartConfig.xAxisMLConstraintAggregate" ng-options="type for type in aggregateTypes" ng-disable="!highchartConfig.xAxisMLConstraint"></select>
@@ -75,7 +75,7 @@
             </div>
             <div class="col-sm-6" as-sortable="xSortOptions" ng-model="yAxisMLConstraint">
               <ul style="min-heigth:20px;border:1px dotted black;">
-                <li class="btn btn-default" ng-repeat="key in yAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="yAxisMLConstraint.splice($index, 1)"><span
+                <li class="btn btn-default" ng-repeat="key in yAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key | decodeString}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="yAxisMLConstraint.splice($index, 1)"><span
                     class="glyphicon glyphicon-remove"></span></a></li>
               </ul>
               <select ng-model="highchartConfig.yAxisMLConstraintAggregate" ng-options="type for type in aggregateTypes" ng-disable="!highchartConfig.yAxisMLConstraint"></select>
@@ -87,7 +87,7 @@
             </div>
             <div class="col-sm-6" as-sortable="xSortOptions" ng-model="zAxisMLConstraint">
               <ul style="min-heigth:20px;border:1px dotted black;">
-                <li class="btn btn-default" ng-repeat="key in zAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="zAxisMLConstraint.splice($index, 1)"><span
+                <li class="btn btn-default" ng-repeat="key in zAxisMLConstraint" as-sortable-item as-sortable-item-handle>{{key | decodeString}} <a data-no-drag class="removeCard pull-right btn btn-xs" ng-click="zAxisMLConstraint.splice($index, 1)"><span
                     class="glyphicon glyphicon-remove"></span></a></li>
               </ul>
               <select ng-model="highchartConfig.zAxisMLConstraintAggregate" ng-options="type for type in aggregateTypes" ng-disable="!highchartConfig.zAxisMLConstraint"></select>
@@ -121,7 +121,7 @@
         <div class="col-sm-6" as-sortable="facetSortOptions" ng-model="chartFacetOptions" style="min-heigth:20px;">
           <label>Values</label>
           <ul style="border:1px dotted black;">
-            <li class="btn btn-default" ng-repeat="key in chartFacetOptions" as-sortable-item as-sortable-item-handle>{{key}}</li>
+            <li class="btn btn-default" ng-repeat="key in chartFacetOptions" as-sortable-item as-sortable-item-handle>{{key | decodeString}}</li>
           </ul>
         </div>
       </div>

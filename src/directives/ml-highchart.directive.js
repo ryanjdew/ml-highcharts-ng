@@ -19,6 +19,15 @@
    * @namespace ml-highchart
    */
   angular.module('ml.highcharts')
+    .filter('decodeString', function() {
+      return function(input) {
+        try {
+          return decodeURIComponent(input);
+        } catch (e) {
+          return {};
+        }
+      };
+    })
     .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
 
       function link(scope, element, attrs) {
