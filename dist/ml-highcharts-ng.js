@@ -368,7 +368,7 @@
         });
 
         // If categories, use catIndex for x and/or y..
-        if (categories.length || yCategories.length) {
+        if ((categories && categories.length) || (yCategories && yCategories.length)) {
           angular.forEach(seriesData, function(series) {
             angular.forEach(series.data, function(dp) {
               if (dp.xCategory && dp.x === undefined) {
