@@ -31,7 +31,9 @@
     .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
 
       function link(scope, element, attrs) {
-  
+        if (!attrs.callback) {
+          scope.callback = null;
+        }
         if (!scope.mlSearch) {
           scope.mlSearch = searchFactory.newContext();
         }

@@ -86,7 +86,7 @@
           mlSearch = MLSearchFactory.newContext();
         }
         if (callback) {
-          chart.options.plotOptions = {
+          var plotOptions = {
             series: {
               cursor: 'pointer',
               point: {
@@ -102,6 +102,11 @@
               }
             }
           };
+          if (chart.options.plotOptions) {
+            angular.merge(chart.options.plotOptions, plotOptions);
+          } else {
+            chart.options.plotOptions = plotOptions;
+          }
         }
         getStoredOptions(mlSearch).then(function(data) {
           if (data.options && data.options.constraint && data.options.constraint.length) {
@@ -590,6 +595,12 @@
                   y: getValue(facetCombination[dataConfig.facets.yAxisIndex]),
                   z: getValue(facetCombination[dataConfig.facets.zAxisIndex])
                 };
+                if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
+                  valueIndexes.push(dataPoint.xCategory);
+                }
+                if (dataPoint.yCategory && yValueIndexes.indexOf(dataPoint.yCategory) < 0) {
+                  yValueIndexes.push(dataPoint.yCategory);
+                }
                 if (constraintsFromFacets.length === 1) {
                   dataPoint.frequency = facetCombination[0].frequency || facetCombination[0].count;
                   dataPoint[dataConfig.frequency] = dataPoint.frequency;
