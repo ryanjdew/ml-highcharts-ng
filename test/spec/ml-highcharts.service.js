@@ -138,7 +138,7 @@ describe('HighchartsHelper#mock-service', function () {
     var element = $compile('<ml-highchart highchart-config="highchartConfig"></ml-highchart>')($rootScope);
     $rootScope.$digest();
     // Check that the compiled element contains the templated content
-    expect(element.html()).toContain("Highcharts");
+    expect(element.html()).toContain("populatedConfig");
   });
 
   it('reloads when mlSearch.results changes', function() {

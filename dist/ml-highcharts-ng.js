@@ -232,7 +232,7 @@
         }
       };
     })
-    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
+    .directive('mlHighchart', ['$q', '$timeout', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, $timeout, HighchartsHelper, MLRest, searchFactory) {
 
       function link(scope, element, attrs) {
         if (!attrs.callback) {
@@ -254,7 +254,9 @@
             HighchartsHelper.chartFromConfig(
               scope.highchartConfig, mlSearch,
               scope.callback).then(function(populatedConfig) {
-              scope.populatedConfig = populatedConfig;
+              $timeout(function() {
+                scope.populatedConfig = populatedConfig;
+              });
             });
           }
         };
