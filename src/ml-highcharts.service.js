@@ -17,7 +17,25 @@
         return _storedOptionPromises[queryOptions];
       }
 
-      highchartsHelper.seriesData = function(data, chartType, categories, yCategories) {
+      function parseDateInformation(dateStr) {
+        var date;
+        if (/^[1-9]+\/[1-9]+\/[0-9]{2,2}/.test(dateStr)) {
+          var yearPart = parseInt(dateStr.replace(/^.*\/([0-9]{2,2})$/, '$1'), 10);
+          var monthPart = parseInt(dateStr.replace(/^([0-9]{1,2})\/.*$/, '$1'), 10);
+          date = new Date(Date.parse(dateStr));
+          date.setFullYear((yearPart > 50 ? 1900 : 2000) + yearPart);
+          date.setMonth(monthPart - 1);
+        } else if (/^[1-9]+-[A-Za-z]/.test(dateStr)) {
+          var year = 2000 + parseInt(dateStr.replace(/^([1-9]+)\-(.*)$/, '$1'), 10);
+          date = new Date(Date.parse(dateStr));
+          date.setFullYear(year);
+        } else {
+          date = new Date(Date.parse(dateStr));
+        }
+        return date;
+      }
+
+      highchartsHelper.seriesData = function(data, chartType, categories, yCategories, highchartConfig) {
         var seriesData = [];
 
         // Loop over all data points to push them into the correct series,
@@ -111,7 +129,7 @@
         getStoredOptions(mlSearch).then(function(data) {
           if (data.options && data.options.constraint && data.options.constraint.length) {
             highchartsHelper.getChartData(mlSearch, data.options.constraint, highchartConfig, highchartConfig.resultLimit).then(function(values) {
-              chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories, values.yCategories);
+              chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories, values.yCategories, highchartConfig);
 
               // Apply xAxis categories
               if (values.categories && values.categories.length) {
@@ -338,6 +356,10 @@
             highchartConfig.zAxisMLConstraint
           ], null, undefined, '$frequency');
 
+        var xAxisIsDateTime = highchartConfig.xAxis && highchartConfig.xAxis.type === 'datetime';
+        var yAxisIsDateTime = highchartConfig.yAxis && highchartConfig.yAxis.type === 'datetime';
+        var zAxisIsDateTime = highchartConfig.zAxis && highchartConfig.zAxis.type === 'datetime';
+
         var valueIndexes = [];
         var yValueIndexes = [];
         var facetData = [];
@@ -382,8 +404,9 @@
             });
             var dataConfig = getDataConfig(highchartConfig, facetConstraintNames, valueConstraintNames);
 
-            var getValue = function(item) {
-              return (item) ? item._value : undefined;
+            var getValue = function(item, isDateTime) {
+              var val = (item) ? item._value : undefined;
+              return (isDateTime && val) ? parseDateInformation(val) : val;
             };
 
             var facetCombinations;
@@ -440,7 +463,7 @@
                                   _.without([
                                     vals[dataConfig.values.xAxisIndex], 
                                     facetCombination[dataConfig.facets.xAxisIndex]
-                                  ], null, undefined)[0]),
+                                  ], null, undefined)[0], xAxisIsDateTime),
                               yCategory: 
                                 getValue(
                                   _.without([
@@ -452,13 +475,13 @@
                                   _.without([
                                     vals[dataConfig.values.yAxisIndex], 
                                     facetCombination[dataConfig.facets.yAxisIndex]
-                                  ], null, undefined)[0]),
+                                  ], null, undefined)[0], yAxisIsDateTime),
                               z: 
                                 getValue(
                                   _.without([
                                     vals[dataConfig.values.zAxisIndex], 
                                     facetCombination[dataConfig.facets.zAxisIndex]
-                                  ], null, undefined)[0])
+                                  ], null, undefined)[0], zAxisIsDateTime)
                             };
                             if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                               valueIndexes.push(dataPoint.xCategory);
@@ -500,7 +523,7 @@
                                   _.without([
                                     (dataConfig.values.xAxisIndex > -1) ? valueObj : null, 
                                     facetCombination[dataConfig.facets.xAxisIndex]
-                                  ], null, undefined)[0]),
+                                  ], null, undefined)[0], xAxisIsDateTime),
                               yCategory: 
                                 getValue(
                                   _.without([
@@ -512,13 +535,13 @@
                                   _.without([
                                     (dataConfig.values.yAxisIndex > -1) ? valueObj : null, 
                                     facetCombination[dataConfig.facets.yAxisIndex]
-                                  ], null, undefined)[0]),
+                                  ], null, undefined)[0], yAxisIsDateTime),
                               z: 
                                 getValue(
                                   _.without([
                                     (dataConfig.values.zAxisIndex > -1) ? valueObj : null, 
                                     facetCombination[dataConfig.facets.zAxisIndex]
-                                  ], null, undefined)[0])
+                                  ], null, undefined)[0], zAxisIsDateTime)
                             };
                             if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                               valueIndexes.push(dataPoint.xCategory);
@@ -590,10 +613,10 @@
                   seriesName: getValue(facetCombination[dataConfig.facets.seriesNameIndex]),
                   name: getValue(facetCombination[dataConfig.facets.dataPointNameIndex]),
                   xCategory: getValue(facetCombination[dataConfig.facets.xCategoryAxisIndex]),
-                  x: getValue(facetCombination[dataConfig.facets.xAxisIndex]),
+                  x: getValue(facetCombination[dataConfig.facets.xAxisIndex], xAxisIsDateTime),
                   yCategory: getValue(facetCombination[dataConfig.facets.yCategoryAxisIndex]),
-                  y: getValue(facetCombination[dataConfig.facets.yAxisIndex]),
-                  z: getValue(facetCombination[dataConfig.facets.zAxisIndex])
+                  y: getValue(facetCombination[dataConfig.facets.yAxisIndex], yAxisIsDateTime),
+                  z: getValue(facetCombination[dataConfig.facets.zAxisIndex], zAxisIsDateTime)
                 };
                 if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                   valueIndexes.push(dataPoint.xCategory);

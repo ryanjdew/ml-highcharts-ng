@@ -2,13 +2,15 @@
 
 describe('HighchartsHelper#mock-service', function () {
 
-  var highchartsHelper, mockMLRest, mockValuesResults, mockTuplesResults, mockOptions,
+  var highchartsHelper, mockMLRest, mockValuesResults, mockValuesDatesResults, mockTuplesResults, mockOptions,
     searchFactory, valuesHighchartConfig, tuplesHighchartConfig, $rootScope, $q;
 
   // fixture
   beforeEach(module('values-result.json'));
+  beforeEach(module('values-dates-result.json'));
   beforeEach(module('tuples-result.json'));
   beforeEach(module('values-highchart-config.json'));
+  beforeEach(module('values-dates-highchart-config.json'));
   beforeEach(module('tuples-highchart-config.json'));
   beforeEach(module('options-all.json'));
 
@@ -42,8 +44,10 @@ describe('HighchartsHelper#mock-service', function () {
   beforeEach(inject(function ($injector) {
     mockOptions = $injector.get('optionsAll');
     mockValuesResults = $injector.get('valuesResult');
+    mockValuesDatesResults = $injector.get('valuesDatesResult');
     mockTuplesResults = $injector.get('tuplesResult');
     valuesHighchartConfig = $injector.get('valuesHighchartConfig');
+    valuesDatesHighchartConfig = $injector.get('valuesDatesHighchartConfig');
     tuplesHighchartConfig = $injector.get('tuplesHighchartConfig');
     $q = $injector.get('$q');
     // $httpBackend = $injector.get('$httpBackend');
@@ -186,6 +190,25 @@ describe('HighchartsHelper#mock-service', function () {
     $rootScope.structuredQuery['and-query'].query.push({'qtext': 'this is a test'});
     $rootScope.$digest();
     expect(highchartsHelper.chartFromConfig.calls.count()).toEqual(2);
+  });
+
+  it('converts xAxis datetime to date object', function() {
+    mockMLRest.values = jasmine.createSpy('values').and.callFake(function() {
+        var d = $q.defer();
+        d.resolve({ data: mockValuesDatesResults });
+        return d.promise;
+      });
+    $rootScope.$digest();
+    highchartsHelper.chartFromConfig(valuesDatesHighchartConfig).then(function(populatedConfig) {
+      var xAxisIsDates = null;
+      angular.forEach(populatedConfig.series, function(series) {
+        angular.forEach(series.data, function(dp) {
+          xAxisIsDates = (xAxisIsDates || xAxisIsDates === null) && dp.x instanceof Date; 
+        });
+      });
+      expect(xAxisIsDates).toEqual(true);
+    });
+    $rootScope.$digest();
   });
 
 });

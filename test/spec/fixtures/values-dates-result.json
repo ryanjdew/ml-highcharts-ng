@@ -1,0 +1,1 @@
+{"values-response":{"name":"cooccurrence","type":"xs:string","distinct-value":[{"frequency":93,"_value":"2010-02-01"},{"frequency":89,"_value":"2010-03-01"},{"frequency":49,"_value":"2010-01-01"}],"metrics":{"values-resolution-time":"PT0.000972S","total-time":"PT0.001765S"}}}

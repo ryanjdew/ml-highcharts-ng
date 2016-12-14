@@ -5,120 +5,6 @@
 
 }());
 (function() {
-
-  'use strict';
-
-  /**
-   * angular element directive; a highchart based off of MarkLogic values result.
-   *
-   * attributes:
-   *
-   * - `highchart-config`: a reference to the model with chart config information
-   * - `ml-search`: optional. An mlSearch context to filter query.
-   * - `callback`: optional. A function reference to callback when a chart item is selected
-   *
-   * Example:
-   *
-   * ```
-   * <ml-highchart highchart-config="model.highChartConfig" ml-search="mlSearch"></ml-highchart>```
-   *
-   * @namespace ml-highchart
-   */
-  angular.module('ml.highcharts')
-    .filter('decodeString', function() {
-      return function(input) {
-        try {
-          return decodeURIComponent(input);
-        } catch (e) {
-          return {};
-        }
-      };
-    })
-    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
-
-      function link(scope, element, attrs) {
-        if (!attrs.callback) {
-          scope.callback = null;
-        }
-        if (!scope.mlSearch) {
-          scope.mlSearch = searchFactory.newContext();
-        }
-
-        var mlSearch = scope.mlSearch;
-
-        if (scope.structuredQuery) {
-          mlSearch = searchFactory.newContext();
-          mlSearch.addAdditionalQuery(scope.structuredQuery);
-        }
-        
-        var loadData = function() {
-          if (scope.highchartConfig) {
-            HighchartsHelper.chartFromConfig(
-              scope.highchartConfig, mlSearch,
-              scope.callback).then(function(populatedConfig) {
-              scope.populatedConfig = populatedConfig;
-            });
-          }
-        };
-        var reloadChartsDecorator = function(fn) {
-          return function() {
-            var results = fn.apply(this, arguments);
-            if (results && angular.isFunction(results.then)) {
-              // Then this is promise
-              return results.then(function(data) {
-                loadData();
-                return data;
-              });
-            } else {
-              loadData();
-              return results;
-            }
-          };
-        };
-
-        var origSearchFun = mlSearch.search;
-        mlSearch.search = reloadChartsDecorator(origSearchFun);
-
-        var structuredQueryWatch = null;
-        var mlSearchWatch = null;
-
-        scope.$watch('highchartConfig', function(newVal, oldValue) {
-          if (newVal && !angular.equals({}, newVal)) {
-            if (attrs.structuredQuery && !structuredQueryWatch) {
-              structuredQueryWatch = scope.$watch('structuredQuery', function(newVal) {
-                if (newVal && !angular.equals({}, newVal)) {
-                  loadData();
-                }
-              }, true);
-            } else if (attrs.mlSearch && !mlSearchWatch) {
-              mlSearchWatch = scope.$watch('mlSearch.results', function(newVal) {
-                if (newVal && !angular.equals({}, newVal)) {
-                  loadData();
-                }
-              }, true);
-            } else if (oldValue || !(attrs.mlSearch || attrs.structuredQuery)) {
-             loadData();
-            }
-          }
-        }, true);
-
-      }
-
-      return {
-        restrict: 'E',
-        templateUrl: '/ml-highcharts/templates/ml-highchart.html',
-        scope: {
-          'mlSearch': '=?',
-          'structuredQuery': '=?',
-          'highchartConfig': '=',
-          'callback': '&'
-        },
-        link: link
-      };
-    }]);
-})();
-
-(function() {
   'use strict';
   /**
    * @ngdoc controller
@@ -313,6 +199,120 @@
 }());
 
 (function() {
+
+  'use strict';
+
+  /**
+   * angular element directive; a highchart based off of MarkLogic values result.
+   *
+   * attributes:
+   *
+   * - `highchart-config`: a reference to the model with chart config information
+   * - `ml-search`: optional. An mlSearch context to filter query.
+   * - `callback`: optional. A function reference to callback when a chart item is selected
+   *
+   * Example:
+   *
+   * ```
+   * <ml-highchart highchart-config="model.highChartConfig" ml-search="mlSearch"></ml-highchart>```
+   *
+   * @namespace ml-highchart
+   */
+  angular.module('ml.highcharts')
+    .filter('decodeString', function() {
+      return function(input) {
+        try {
+          return decodeURIComponent(input);
+        } catch (e) {
+          return {};
+        }
+      };
+    })
+    .directive('mlHighchart', ['$q', 'HighchartsHelper', 'MLRest', 'MLSearchFactory', function($q, HighchartsHelper, MLRest, searchFactory) {
+
+      function link(scope, element, attrs) {
+        if (!attrs.callback) {
+          scope.callback = null;
+        }
+        if (!scope.mlSearch) {
+          scope.mlSearch = searchFactory.newContext();
+        }
+
+        var mlSearch = scope.mlSearch;
+
+        if (scope.structuredQuery) {
+          mlSearch = searchFactory.newContext();
+          mlSearch.addAdditionalQuery(scope.structuredQuery);
+        }
+        
+        var loadData = function() {
+          if (scope.highchartConfig) {
+            HighchartsHelper.chartFromConfig(
+              scope.highchartConfig, mlSearch,
+              scope.callback).then(function(populatedConfig) {
+              scope.populatedConfig = populatedConfig;
+            });
+          }
+        };
+        var reloadChartsDecorator = function(fn) {
+          return function() {
+            var results = fn.apply(this, arguments);
+            if (results && angular.isFunction(results.then)) {
+              // Then this is promise
+              return results.then(function(data) {
+                loadData();
+                return data;
+              });
+            } else {
+              loadData();
+              return results;
+            }
+          };
+        };
+
+        var origSearchFun = mlSearch.search;
+        mlSearch.search = reloadChartsDecorator(origSearchFun);
+
+        var structuredQueryWatch = null;
+        var mlSearchWatch = null;
+
+        scope.$watch('highchartConfig', function(newVal, oldValue) {
+          if (newVal && !angular.equals({}, newVal)) {
+            if (attrs.structuredQuery && !structuredQueryWatch) {
+              structuredQueryWatch = scope.$watch('structuredQuery', function(newVal) {
+                if (newVal && !angular.equals({}, newVal)) {
+                  loadData();
+                }
+              }, true);
+            } else if (attrs.mlSearch && !mlSearchWatch) {
+              mlSearchWatch = scope.$watch('mlSearch.results', function(newVal) {
+                if (newVal && !angular.equals({}, newVal)) {
+                  loadData();
+                }
+              }, true);
+            } else if (oldValue || !(attrs.mlSearch || attrs.structuredQuery)) {
+             loadData();
+            }
+          }
+        }, true);
+
+      }
+
+      return {
+        restrict: 'E',
+        templateUrl: '/ml-highcharts/templates/ml-highchart.html',
+        scope: {
+          'mlSearch': '=?',
+          'structuredQuery': '=?',
+          'highchartConfig': '=',
+          'callback': '&'
+        },
+        link: link
+      };
+    }]);
+})();
+
+(function() {
   'use strict';
 
   angular.module('ml.highcharts')
@@ -331,7 +331,25 @@
         return _storedOptionPromises[queryOptions];
       }
 
-      highchartsHelper.seriesData = function(data, chartType, categories, yCategories) {
+      function parseDateInformation(dateStr) {
+        var date;
+        if (/^[1-9]+\/[1-9]+\/[0-9]{2,2}/.test(dateStr)) {
+          var yearPart = parseInt(dateStr.replace(/^.*\/([0-9]{2,2})$/, '$1'), 10);
+          var monthPart = parseInt(dateStr.replace(/^([0-9]{1,2})\/.*$/, '$1'), 10);
+          date = new Date(Date.parse(dateStr));
+          date.setFullYear((yearPart > 50 ? 1900 : 2000) + yearPart);
+          date.setMonth(monthPart - 1);
+        } else if (/^[1-9]+-[A-Za-z]/.test(dateStr)) {
+          var year = 2000 + parseInt(dateStr.replace(/^([1-9]+)\-(.*)$/, '$1'), 10);
+          date = new Date(Date.parse(dateStr));
+          date.setFullYear(year);
+        } else {
+          date = new Date(Date.parse(dateStr));
+        }
+        return date;
+      }
+
+      highchartsHelper.seriesData = function(data, chartType, categories, yCategories, highchartConfig) {
         var seriesData = [];
 
         // Loop over all data points to push them into the correct series,
@@ -425,7 +443,7 @@
         getStoredOptions(mlSearch).then(function(data) {
           if (data.options && data.options.constraint && data.options.constraint.length) {
             highchartsHelper.getChartData(mlSearch, data.options.constraint, highchartConfig, highchartConfig.resultLimit).then(function(values) {
-              chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories, values.yCategories);
+              chart.series = highchartsHelper.seriesData(values.data, chartType, values.categories, values.yCategories, highchartConfig);
 
               // Apply xAxis categories
               if (values.categories && values.categories.length) {
@@ -652,6 +670,10 @@
             highchartConfig.zAxisMLConstraint
           ], null, undefined, '$frequency');
 
+        var xAxisIsDateTime = highchartConfig.xAxis && highchartConfig.xAxis.type === 'datetime';
+        var yAxisIsDateTime = highchartConfig.yAxis && highchartConfig.yAxis.type === 'datetime';
+        var zAxisIsDateTime = highchartConfig.zAxis && highchartConfig.zAxis.type === 'datetime';
+
         var valueIndexes = [];
         var yValueIndexes = [];
         var facetData = [];
@@ -696,8 +718,9 @@
             });
             var dataConfig = getDataConfig(highchartConfig, facetConstraintNames, valueConstraintNames);
 
-            var getValue = function(item) {
-              return (item) ? item._value : undefined;
+            var getValue = function(item, isDateTime) {
+              var val = (item) ? item._value : undefined;
+              return (isDateTime && val) ? parseDateInformation(val) : val;
             };
 
             var facetCombinations;
@@ -754,7 +777,7 @@
                                   _.without([
                                     vals[dataConfig.values.xAxisIndex], 
                                     facetCombination[dataConfig.facets.xAxisIndex]
-                                  ], null, undefined)[0]),
+                                  ], null, undefined)[0], xAxisIsDateTime),
                               yCategory: 
                                 getValue(
                                   _.without([
@@ -766,13 +789,13 @@
                                   _.without([
                                     vals[dataConfig.values.yAxisIndex], 
                                     facetCombination[dataConfig.facets.yAxisIndex]
-                                  ], null, undefined)[0]),
+                                  ], null, undefined)[0], yAxisIsDateTime),
                               z: 
                                 getValue(
                                   _.without([
                                     vals[dataConfig.values.zAxisIndex], 
                                     facetCombination[dataConfig.facets.zAxisIndex]
-                                  ], null, undefined)[0])
+                                  ], null, undefined)[0], zAxisIsDateTime)
                             };
                             if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                               valueIndexes.push(dataPoint.xCategory);
@@ -814,7 +837,7 @@
                                   _.without([
                                     (dataConfig.values.xAxisIndex > -1) ? valueObj : null, 
                                     facetCombination[dataConfig.facets.xAxisIndex]
-                                  ], null, undefined)[0]),
+                                  ], null, undefined)[0], xAxisIsDateTime),
                               yCategory: 
                                 getValue(
                                   _.without([
@@ -826,13 +849,13 @@
                                   _.without([
                                     (dataConfig.values.yAxisIndex > -1) ? valueObj : null, 
                                     facetCombination[dataConfig.facets.yAxisIndex]
-                                  ], null, undefined)[0]),
+                                  ], null, undefined)[0], yAxisIsDateTime),
                               z: 
                                 getValue(
                                   _.without([
                                     (dataConfig.values.zAxisIndex > -1) ? valueObj : null, 
                                     facetCombination[dataConfig.facets.zAxisIndex]
-                                  ], null, undefined)[0])
+                                  ], null, undefined)[0], zAxisIsDateTime)
                             };
                             if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                               valueIndexes.push(dataPoint.xCategory);
@@ -904,10 +927,10 @@
                   seriesName: getValue(facetCombination[dataConfig.facets.seriesNameIndex]),
                   name: getValue(facetCombination[dataConfig.facets.dataPointNameIndex]),
                   xCategory: getValue(facetCombination[dataConfig.facets.xCategoryAxisIndex]),
-                  x: getValue(facetCombination[dataConfig.facets.xAxisIndex]),
+                  x: getValue(facetCombination[dataConfig.facets.xAxisIndex], xAxisIsDateTime),
                   yCategory: getValue(facetCombination[dataConfig.facets.yCategoryAxisIndex]),
-                  y: getValue(facetCombination[dataConfig.facets.yAxisIndex]),
-                  z: getValue(facetCombination[dataConfig.facets.zAxisIndex])
+                  y: getValue(facetCombination[dataConfig.facets.yAxisIndex], yAxisIsDateTime),
+                  z: getValue(facetCombination[dataConfig.facets.zAxisIndex], zAxisIsDateTime)
                 };
                 if (dataPoint.xCategory && valueIndexes.indexOf(dataPoint.xCategory) < 0) {
                   valueIndexes.push(dataPoint.xCategory);

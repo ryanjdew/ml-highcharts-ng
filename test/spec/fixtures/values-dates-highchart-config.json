@@ -1,0 +1,34 @@
+{
+  "options": {
+    "chart": {
+      "type": "bar"
+    },
+    "tooltip": {
+      "style": {
+        "padding": 10,
+        "fontWeight": "bold"
+      }
+    }
+  },
+  "title": {
+    "text": "Title"
+  },
+  "xAxis": {
+    "type": "datetime",
+    "title": {
+      "text": "Dates"
+    }
+  },
+  "xAxisMLConstraint": "Ingredients",
+  "yAxis": {
+    "title": {
+      "text": "$frequency"
+    }
+  },
+  "yAxisMLConstraint": "$frequency",
+  "size": {
+    "height": 250,
+    "width": 300
+  },
+  "resultLimit": 15
+}
