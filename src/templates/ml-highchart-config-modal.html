@@ -100,13 +100,27 @@
             <div class="col-sm-6">
                <input type="text" ng-model="highchartConfig.xAxis.title.text" />
             </div>
+            <div class="col-sm-6">
+              <label>xAxis type</label>
+            </div>
+            <div class="col-sm-6">
+               <select ng-model="highchartConfig.xAxis.type" ng-options="axisType as axisType for axisType in axisTypes">
+               </select>
+            </div>
           </div>
           <div class="col-sm-12">
             <div class="col-sm-6">
               <label>yAxis Label</label>
             </div>
             <div class="col-sm-6">
-               <input type="text" ng-model="highchartConfig.yAxis.title.text" />              
+               <input type="text" ng-model="highchartConfig.yAxis.title.text" />
+            </div>
+            <div class="col-sm-6">
+              <label>yAxis type</label>
+            </div>
+            <div class="col-sm-6">
+               <select ng-model="highchartConfig.yAxis.type" ng-options="axisType as axisType for axisType in axisTypes">
+               </select>
             </div>
           </div>
           <div class="col-sm-12">
@@ -114,7 +128,14 @@
               <label>zAxis Label</label>
             </div>
             <div class="col-sm-6">
-               <input type="text" ng-model="highchartConfig.zAxis.title.text" />              
+               <input type="text" ng-model="highchartConfig.zAxis.title.text" />
+            </div>
+            <div class="col-sm-6">
+              <label>zAxis type</label>
+            </div>
+            <div class="col-sm-6">
+               <select ng-model="highchartConfig.zAxis.type" ng-options="axisType as axisType for axisType in axisTypes">
+               </select>
             </div>
           </div>
         </div>

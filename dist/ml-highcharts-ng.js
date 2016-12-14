@@ -33,6 +33,7 @@
         $uibModalInstance, $scope, $timeout, HighchartsHelper, 
         facets, highchartConfig, mlSearch
       ) {
+      $scope.axisTypes = ['linear', 'logarithmic', 'datetime', 'categories'];
       $scope.facetSortOptions = {
         clone: true,
         accept: function(sourceItemHandleScope, destSortableScope) {
@@ -71,7 +72,8 @@
         xAxis: {
           title: {
             text: facetName
-          }
+          },
+          type: 'linear'
         },
         seriesNameMLConstraint: facetName,
         dataPointNameMLConstraint: null,
@@ -82,14 +84,16 @@
         yAxis: {
           title: {
             text: null
-          }
+          },
+          type: 'linear'
         },
         yAxisMLConstraint: '$frequency',
         yAxisMLConstraintAggregate: null,
         zAxis: {
           title: {
             text: null
-          }
+          },
+          type: 'linear'
         },
         zAxisMLConstraint: null,
         zAxisMLConstraintAggregate: null,
