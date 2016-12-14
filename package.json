@@ -1,6 +1,6 @@
 {
   "name": "ml-highcharts-ng",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "AngularJS library for working with MarkLogic and Highcharts",
   "devDependencies": {
     "gulp": "^3.9.1",
