@@ -7,7 +7,7 @@
   ],
   "description": "AngularJS library for working with MarkLogic and Highcharts",
   "main": [
-    "dist/ml-highcharts-ng.min.js",
+    "dist/ml-highcharts-ng.js",
     "dist/ml-highcharts-ng-tpls.min.js"
   ],
   "dependencies": {
