@@ -73,9 +73,9 @@
           }
         });
 
-        // If categories, use catIndex for x and/or y..
-        if ((categories && categories.length) || (yCategories && yCategories.length)) {
-          angular.forEach(seriesData, function(series) {
+        angular.forEach(seriesData, function(series) {
+          // If categories, use catIndex for x and/or y..
+          if ((categories && categories.length) || (yCategories && yCategories.length)) {
             angular.forEach(series.data, function(dp) {
               if (dp.xCategory && dp.x === undefined) {
                 dp.x = categories.indexOf(dp.xCategory);
@@ -91,8 +91,9 @@
                 series.data[catIndex] = {};
               }
             });
-          });
-        }
+          }
+          series.data.sort(function(a, b) { return b.x - a.x; });
+        });
         return seriesData;
       };
 
