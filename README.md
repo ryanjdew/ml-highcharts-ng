@@ -11,31 +11,9 @@ AngularJS library for working with MarkLogic and Highcharts
 
 #### directives
 
-- `ml-highchart`: accepts highcart configuration object as highchart-config and MLSearch context as ml-search
+- `ml-highchart`: accepts highcart configuration object as highchart-config and MLSearch context as ml-search. Optionally accepts a structured-query object which will replace the search query with the structured query.
 
 #### example
-
-Search constraint with buckets:
-``` 
-  <constraint name="Years">
-    <range type="xs:date" facet="true">
-      <element ns="http://marklogic.com/flights" name="departure-date"/>
-
-    <bucket ge="2016-01-01" name="future"></bucket>
-      <bucket lt="2016-01-01" ge="2015-01-01" name="2015"></bucket>
-      <bucket lt="2015-01-01" ge="2014-01-01" name="2014"></bucket>
-      <bucket lt="2014-01-01" ge="2013-01-01" name="2013"></bucket>
-      <bucket lt="2013-01-01" ge="2012-01-01" name="2012"></bucket>
-      <bucket lt="2012-01-01" ge="2011-01-01" name="2011"></bucket>
-      <bucket lt="2011-01-01" ge="2010-01-01" name="2010"></bucket>
-      <bucket lt="2010-01-01" name="past"></bucket>
-
-      <facet-option>descending</facet-option>
-    </range>
-  </constraint>
-
-```
-
 
 app.js
 ```javascript
@@ -66,13 +44,13 @@ app.js
       },
       'xAxis': {
         'title': {
-          'text': 'Years'
+          'text': 'Ingredients'
         }
       },
       // constraint name for x axis
-      'xAxisMLConstraint': 'Years',
+      'xAxisMLConstraint': 'Ingredients',
       // optional constraint name for categorizing x axis values
-      'xAxisCategoriesMLConstraint': 'Category',
+      'dataPointNameMLConstraint': 'Category',
       'yAxis': {
         'title': {
           'text': 'Frequency'
@@ -94,9 +72,12 @@ app.js
     };
   }
 })();
-
 ``` 
 html 
 ```html
-<ml-highchart highchart-config="ctrl.highchartConfig" ml-search="ctrl.mlSearch" ml-search-controller="ctrl"></ml-highchart>
+<ml-highchart highchart-config="ctrl.highchartConfig" ml-search="ctrl.mlSearch"></ml-highchart>
+```
+html using a structured query 
+```html
+<ml-highchart highchart-config="ctrl.highchartConfig" ml-search="ctrl.mlSearch" structured-query="{'term-query':{'text':['blue']}}"></ml-highchart>
 ```
