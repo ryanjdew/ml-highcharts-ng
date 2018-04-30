@@ -11,7 +11,7 @@ AngularJS library for working with MarkLogic and Highcharts
 
 #### directives
 
-- `ml-highchart`: accepts highcart configuration object as highchart-config and MLSearch context as ml-search. Optionally accepts a structured-query object which will replace the search query with the structured query.
+- `ml-highchart`: accepts highcart configuration object as highchart-config and MLSearch context as ml-search
 
 #### example
 
@@ -72,7 +72,7 @@ app.js
       // constraint name for x axis
       'xAxisMLConstraint': 'Years',
       // optional constraint name for categorizing x axis values
-      'dataPointNameMLConstraint': 'Category',
+      'xAxisCategoriesMLConstraint': 'Category',
       'yAxis': {
         'title': {
           'text': 'Frequency'
@@ -99,8 +99,4 @@ app.js
 html 
 ```html
 <ml-highchart highchart-config="ctrl.highchartConfig" ml-search="ctrl.mlSearch" ml-search-controller="ctrl"></ml-highchart>
-```
-html using a structured query 
-```html
-<ml-highchart highchart-config="ctrl.highchartConfig" ml-search="ctrl.mlSearch" structured-query="{'term-query':{'text':['blue']}}"></ml-highchart>
 ```
