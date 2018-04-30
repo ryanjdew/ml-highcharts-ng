@@ -291,11 +291,12 @@
                 }
               }, true);
             } else if (attrs.mlSearch && !mlSearchWatch) {
-              mlSearchWatch = scope.$watch('mlSearch.results', function(newVal) {
-                if (newVal && !angular.equals({}, newVal)) {
-                  loadData();
-                }
-              }, true);
+                // NOTE: removing since reloadChartsDecorator and other mlsearch calls already trigger loadData()
+                // mlSearchWatch = scope.$watch('mlSearch.results', function(newVal) {
+                //   if (newVal && !angular.equals({}, newVal)) {
+                //     loadData();
+                //   }
+                // }, true);
             } else if (oldValue || !(attrs.mlSearch || attrs.structuredQuery)) {
              loadData();
             }
