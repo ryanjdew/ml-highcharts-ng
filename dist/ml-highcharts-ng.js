@@ -27,10 +27,10 @@
 
   angular.module('ml.highcharts')
     .controller('EditChartConfigCtrl', [
-      '$uibModalInstance', '$scope', '$timeout', 'HighchartsHelper', 
-      'facets', 'highchartConfig', 'mlSearch', 
+      '$uibModalInstance', '$scope', '$timeout', 'HighchartsHelper',
+      'facets', 'highchartConfig', 'mlSearch',
       function(
-        $uibModalInstance, $scope, $timeout, HighchartsHelper, 
+        $uibModalInstance, $scope, $timeout, HighchartsHelper,
         facets, highchartConfig, mlSearch
       ) {
       $scope.axisTypes = ['linear', 'logarithmic', 'datetime', 'categories'];
@@ -248,7 +248,7 @@
           mlSearch = searchFactory.newContext();
           mlSearch.addAdditionalQuery(scope.structuredQuery);
         }
-        
+
         var loadData = function() {
           if (scope.highchartConfig) {
             HighchartsHelper.chartFromConfig(
@@ -291,11 +291,12 @@
                 }
               }, true);
             } else if (attrs.mlSearch && !mlSearchWatch) {
-              mlSearchWatch = scope.$watch('mlSearch.results', function(newVal) {
-                if (newVal && !angular.equals({}, newVal)) {
-                  loadData();
-                }
-              }, true);
+                // NOTE: removing since reloadChartsDecorator and other mlsearch calls already trigger loadData()
+                // mlSearchWatch = scope.$watch('mlSearch.results', function(newVal) {
+                //   if (newVal && !angular.equals({}, newVal)) {
+                //     loadData();
+                //   }
+                // }, true);
             } else if (oldValue || !(attrs.mlSearch || attrs.structuredQuery)) {
              loadData();
             }
@@ -323,8 +324,8 @@
 
   angular.module('ml.highcharts')
     .factory('HighchartsHelper', [
-      '$q', 'MLQueryBuilder', 'MLRest', 
-      'MLSearchFactory', 
+      '$q', 'MLQueryBuilder', 'MLRest',
+      'MLSearchFactory',
     function($q, MLQueryBuilder, MLRest, MLSearchFactory) {
       var highchartsHelper = {};
       var _storedOptionPromises = {};
@@ -763,44 +764,44 @@
                             var vals = tup['distinct-value'];
                             var dataPoint = {
                               facetNames: facetNames,
-                              seriesName: 
+                              seriesName:
                                 getValue(
                                   _.without([
-                                    vals[dataConfig.values.seriesNameIndex], 
+                                    vals[dataConfig.values.seriesNameIndex],
                                     facetCombination[dataConfig.facets.seriesNameIndex]
                                   ], null, undefined)[0]),
-                              name: 
+                              name:
                                 getValue(
                                   _.without([
                                     vals[dataConfig.values.dataPointNameIndex], facetCombination[dataConfig.facets.dataPointNameIndex]
                                   ], null, undefined)[0]),
-                              xCategory: 
+                              xCategory:
                                 getValue(
                                   _.without([
                                     vals[dataConfig.values.xCategoryAxisIndex], facetCombination[dataConfig.facets.xCategoryAxisIndex]
                                   ], null, undefined)[0]),
-                              x: 
+                              x:
                                 getValue(
                                   _.without([
-                                    vals[dataConfig.values.xAxisIndex], 
+                                    vals[dataConfig.values.xAxisIndex],
                                     facetCombination[dataConfig.facets.xAxisIndex]
                                   ], null, undefined)[0], xAxisIsDateTime),
-                              yCategory: 
+                              yCategory:
                                 getValue(
                                   _.without([
-                                    vals[dataConfig.values.yCategoryAxisIndex], 
+                                    vals[dataConfig.values.yCategoryAxisIndex],
                                     facetCombination[dataConfig.facets.yCategoryAxisIndex]
                                   ], null, undefined)[0]),
-                              y: 
+                              y:
                                 getValue(
                                   _.without([
-                                    vals[dataConfig.values.yAxisIndex], 
+                                    vals[dataConfig.values.yAxisIndex],
                                     facetCombination[dataConfig.facets.yAxisIndex]
                                   ], null, undefined)[0], yAxisIsDateTime),
-                              z: 
+                              z:
                                 getValue(
                                   _.without([
-                                    vals[dataConfig.values.zAxisIndex], 
+                                    vals[dataConfig.values.zAxisIndex],
                                     facetCombination[dataConfig.facets.zAxisIndex]
                                   ], null, undefined)[0], zAxisIsDateTime)
                             };
@@ -821,46 +822,46 @@
                           angular.forEach(results['values-response']['distinct-value'], function(valueObj) {
                             var dataPoint = {
                               facetNames: facetNames,
-                              seriesName: 
+                              seriesName:
                                 getValue(
                                   _.without([
-                                    (dataConfig.values.seriesNameIndex > -1) ? valueObj : null, 
+                                    (dataConfig.values.seriesNameIndex > -1) ? valueObj : null,
                                     facetCombination[dataConfig.facets.seriesNameIndex]
                                   ], null, undefined)[0]),
-                              name: 
+                              name:
                                 getValue(
                                   _.without([
-                                    (dataConfig.values.dataPointNameIndex > -1) ? valueObj : null, 
+                                    (dataConfig.values.dataPointNameIndex > -1) ? valueObj : null,
                                     facetCombination[dataConfig.facets.dataPointNameIndex]
                                   ], null, undefined)[0]),
-                              xCategory: 
+                              xCategory:
                                 getValue(
                                   _.without([
-                                    (dataConfig.values.xCategoryAxisIndex > -1) ? valueObj : null, 
+                                    (dataConfig.values.xCategoryAxisIndex > -1) ? valueObj : null,
                                     facetCombination[dataConfig.facets.xCategoryAxisIndex]
                                   ], null, undefined)[0]),
-                              x: 
+                              x:
                                 getValue(
                                   _.without([
-                                    (dataConfig.values.xAxisIndex > -1) ? valueObj : null, 
+                                    (dataConfig.values.xAxisIndex > -1) ? valueObj : null,
                                     facetCombination[dataConfig.facets.xAxisIndex]
                                   ], null, undefined)[0], xAxisIsDateTime),
-                              yCategory: 
+                              yCategory:
                                 getValue(
                                   _.without([
-                                    (dataConfig.values.yCategoryAxisIndex > -1) ? valueObj : null, 
+                                    (dataConfig.values.yCategoryAxisIndex > -1) ? valueObj : null,
                                     facetCombination[dataConfig.facets.yCategoryAxisIndex]
                                   ], null, undefined)[0]),
-                              y: 
+                              y:
                                 getValue(
                                   _.without([
-                                    (dataConfig.values.yAxisIndex > -1) ? valueObj : null, 
+                                    (dataConfig.values.yAxisIndex > -1) ? valueObj : null,
                                     facetCombination[dataConfig.facets.yAxisIndex]
                                   ], null, undefined)[0], yAxisIsDateTime),
-                              z: 
+                              z:
                                 getValue(
                                   _.without([
-                                    (dataConfig.values.zAxisIndex > -1) ? valueObj : null, 
+                                    (dataConfig.values.zAxisIndex > -1) ? valueObj : null,
                                     facetCombination[dataConfig.facets.zAxisIndex]
                                   ], null, undefined)[0], zAxisIsDateTime)
                             };
@@ -871,7 +872,7 @@
                               yValueIndexes.push(dataPoint.yCategory);
                             }
                             if (!dataPoint.name) {
-                              dataPoint.name = 
+                              dataPoint.name =
                                 _.without([
                                   dataPoint.xCategory, dataPoint.x, dataPoint.yCategory, dataPoint.y, dataPoint.z
                                 ], null, undefined).join();
@@ -981,12 +982,12 @@
       };
 
       highchartsHelper.constraintValueCall = function(
-          mlSearch, constraints, constraintsFromValues, 
+          mlSearch, constraints, constraintsFromValues,
           limit, combinationQuery, aggregate
       ) {
-        var constraintOptions = 
+        var constraintOptions =
           getSearchConstraintOptions(
-            mlSearch, constraints, constraintsFromValues, 
+            mlSearch, constraints, constraintsFromValues,
             limit, combinationQuery
           );
         return MLRest.values('cooccurrence', {
