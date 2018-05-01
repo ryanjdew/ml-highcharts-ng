@@ -27,10 +27,10 @@
 
   angular.module('ml.highcharts')
     .controller('EditChartConfigCtrl', [
-      '$uibModalInstance', '$scope', '$timeout', 'HighchartsHelper',
-      'facets', 'highchartConfig', 'mlSearch',
+      '$uibModalInstance', '$scope', '$timeout', 'HighchartsHelper', 
+      'facets', 'highchartConfig', 'mlSearch', 
       function(
-        $uibModalInstance, $scope, $timeout, HighchartsHelper,
+        $uibModalInstance, $scope, $timeout, HighchartsHelper, 
         facets, highchartConfig, mlSearch
       ) {
       $scope.axisTypes = ['linear', 'logarithmic', 'datetime', 'categories'];
@@ -248,7 +248,7 @@
           mlSearch = searchFactory.newContext();
           mlSearch.addAdditionalQuery(scope.structuredQuery);
         }
-
+        
         var loadData = function() {
           if (scope.highchartConfig) {
             HighchartsHelper.chartFromConfig(
