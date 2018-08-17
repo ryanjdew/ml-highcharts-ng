@@ -41,7 +41,7 @@
         var mlSearch = scope.mlSearch;
 
         if (scope.structuredQuery) {
-          mlSearch = searchFactory.newContext();
+          //mlSearch = searchFactory.newContext();
           mlSearch.addAdditionalQuery(scope.structuredQuery);
         }
         
@@ -86,14 +86,7 @@
                   loadData();
                 }
               }, true);
-            } else if (attrs.mlSearch && !mlSearchWatch) {
-                // NOTE: removing since reloadChartsDecorator and other mlsearch calls already trigger loadData()
-                // mlSearchWatch = scope.$watch('mlSearch.results', function(newVal) {
-                //   if (newVal && !angular.equals({}, newVal)) {
-                //     loadData();
-                //   }
-                // }, true);
-            } else if (oldValue || !(attrs.mlSearch || attrs.structuredQuery)) {
+            } else {
              loadData();
             }
           }

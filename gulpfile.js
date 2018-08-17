@@ -16,7 +16,7 @@ var gulp = require('gulp'),
     cp = require('child_process');
 
 gulp.task('jshint', function() {
-  gulp.src([
+  return gulp.src([
       './gulpfile.js',
       './src/**/*.js'
     ])
@@ -24,19 +24,20 @@ gulp.task('jshint', function() {
     .pipe(jshint.reporter('default'));
 });
 
-gulp.task('scripts', ['test'], function() {
-  return gulp.src([
-      './src/ml-highcharts.js',
-      './src/**/*.js'
-    ])
-    .pipe(concat('ml-highcharts-ng.js'))
-    .pipe(gulp.dest('dist'))
-    .pipe(rename('ml-highcharts-ng.min.js'))
-    .pipe(uglify())
-    .pipe(gulp.dest('dist'));
+gulp.task('test', function() {
+  return karma.start({
+    configFile: path.join(__dirname, './karma.conf.js'),
+    singleRun: true,
+    autoWatch: false
+  }, function (exitCode) {
+    console.log('Karma has exited with ' + exitCode);
+    if (exitCode !== 0) {
+      process.exit(exitCode);
+    }
+  });
 });
 
-gulp.task('templates', ['test'], function() {
+gulp.task('templates', gulp.series('test', function() {
   return gulp.src([ './src/**/*.html' ])
     .pipe(minifyHtml({
         empty: true,
@@ -50,18 +51,20 @@ gulp.task('templates', ['test'], function() {
     .pipe(concat('ml-highcharts-ng-tpls.min.js'))
     .pipe(uglify())
     .pipe(gulp.dest('dist'));
-});
+}));
 
-gulp.task('test', function() {
-  karma.start({
-    configFile: path.join(__dirname, './karma.conf.js'),
-    singleRun: true,
-    autoWatch: false
-  }, function (exitCode) {
-    console.log('Karma has exited with ' + exitCode);
-    process.exit(exitCode);
-  });
-});
+gulp.task('scripts', gulp.series('test', function() {
+  return gulp.src([
+      './src/ml-highcharts.js',
+      './src/**/*.js'
+    ])
+    .pipe(concat('ml-highcharts-ng.js'))
+    .pipe(gulp.dest('dist'))
+    .pipe(rename('ml-highcharts-ng.min.js'))
+    .pipe(uglify())
+    .pipe(gulp.dest('dist'));
+}));
+
 
 gulp.task('autotest', function() {
   karma.start({
@@ -95,4 +98,4 @@ gulp.task('publish-docs', function() {
   .pipe(ghpages());
 });
 
-gulp.task('default', ['jshint', 'scripts', 'templates']);
+gulp.task('default', gulp.series('jshint', 'scripts', 'templates'));

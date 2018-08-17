@@ -168,6 +168,7 @@ describe('HighchartsHelper#mock-service', function () {
     $rootScope.$digest();
     expect(highchartsHelper.chartFromConfig.calls.count()).toEqual(1);
     $rootScope.mlSearch.results.push({'test': 1});
+    $rootScope.mlSearch.search();
     $rootScope.$digest();
     expect(highchartsHelper.chartFromConfig.calls.count()).toEqual(2);
   });
